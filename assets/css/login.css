@@ -1,0 +1,162 @@
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600&display=swap");
+
+:root {
+  /* Paleta extraída da sua logo */
+  --fusca-orange: #ff4500;
+  --fusca-yellow: #ffb400;
+  --fusca-red: #8b0000;
+  --bg-base: #fdf2f0; /* Um off-white quente para suavizar */
+}
+
+body.login-page {
+  background-color: var(--bg-base);
+  background-image: linear-gradient(
+    135deg,
+    var(--fusca-yellow) 0%,
+    var(--fusca-orange) 100%
+  );
+  height: 100vh;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden; /* Importante para as formas não criarem barra de rolagem */
+  font-family: "Plus Jakarta Sans", sans-serif;
+}
+
+/* Formas Geométricas (estilo os losangos da imagem) */
+body.login-page::before,
+body.login-page::after {
+  content: "";
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  background: rgba(
+    255,
+    255,
+    255,
+    0.15
+  ); /* Transparência para interagir com o fundo */
+  transform: rotate(45deg); /* Cria o efeito de losango */
+  z-index: 0;
+}
+
+/* Forma que sai da borda superior esquerda */
+body.login-page::before {
+  background: linear-gradient(135deg, var(--fusca-yellow), transparent);
+}
+
+/* Forma que sai da borda inferior direita */
+body.login-page::after {
+  background: linear-gradient(135deg, transparent, var(--fusca-red));
+  opacity: 0.4;
+}
+
+.login-card {
+  background: rgba(255, 255, 255, 0.493);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 20px;
+  padding: 2rem;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  position: relative;
+  z-index: 10; /* Garante que o card não seja coberto */
+  /* Mantenha seu CSS do card intocado aqui */
+}
+
+.login-logo {
+  max-width: 180px;
+  margin-bottom: 2rem;
+  filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.1));
+}
+
+.card-title {
+  color: var(--fusca-dark);
+  font-weight: 600;
+  font-size: 1.8rem;
+  margin-bottom: 2rem;
+}
+
+.form-label {
+  display: block;
+  text-align: left;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--fusca-dark);
+  margin-bottom: 0.5rem;
+  opacity: 0.8;
+}
+
+.form-control {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid #ddd;
+  border-radius: 0;
+  padding: 10px 5px;
+  margin-bottom: 1.5rem;
+  width: 100%;
+  transition: all 0.3s ease;
+}
+
+.form-control:focus {
+  outline: none;
+  border-bottom-color: var(--fusca-orange);
+}
+
+.btn-login {
+  background: linear-gradient(to right, #ff4e50, #f9d423);
+  color: white;
+  border: none;
+  border-radius: 25px;
+  padding: 12px;
+  width: 100%;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  box-shadow: 0 10px 20px rgba(255, 69, 0, 0.3);
+  margin: 1rem 0;
+}
+
+.social-text {
+  font-size: 0.8rem;
+  color: #666;
+  margin: 1.5rem 0;
+}
+
+.social-icons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+.social-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  color: #555;
+  text-decoration: none;
+  transition: 0.3s;
+}
+
+.social-btn:hover {
+  transform: translateY(-3px);
+  color: var(--fusca-orange);
+}
+
+.login-page form input{
+    border-radius: 8px;
+    padding: 12px;
+    border: 1px solid var(--fusca-yellow);
+    background-color: #fff;
+}

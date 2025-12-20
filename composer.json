@@ -1,0 +1,15 @@
+{
+    "name": "frango-fusca/frango-fusca",
+    "autoload": {
+        "psr-4": {
+            "FrangoFusca\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Igor Silva",
+            "email": "igorsilvadnascimento@gmail.com"
+        }
+    ],
+    "require": {}
+}

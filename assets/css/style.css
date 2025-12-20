@@ -1,0 +1,89 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap');
+
+:root {
+    --cor-primaria: #5D9C9C; /* Azul Suave/Teal */
+    --cor-primaria-rgb: 93, 156, 156;
+    --cor-secundaria: #F5F7FA; /* Cinza Claro para fundos secundários */
+    --cor-acento: #4A90E2; /* Um azul mais vibrante se precisar de um destaque */
+    --cor-fundo: #FFFFFF; /* Branco Neve para o fundo principal */
+    --cor-texto: #333333; /* Grafite para o texto principal */
+    --cor-texto-secundario: #888888; /* Cinza Médio para texto secundário */
+
+    --font-principal: 'Nunito', sans-serif;
+}
+
+body {
+    font-family: var(--font-principal);
+    background-color: var(--cor-fundo);
+    color: var(--cor-texto);
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 700;
+    color: var(--cor-texto); /* Títulos em grafite */
+}
+
+a {
+    color: var(--cor-primaria);
+    text-decoration: none !important;
+}
+
+a:hover {
+    color: #4b7e7e; /* Um tom mais escuro do primário para o hover */
+    text-decoration: underline;
+}
+
+.bg-primaria {
+    background-color: var(--cor-primaria) !important;
+    color: var(--cor-fundo); /* Texto branco em fundo primário */
+}
+
+.bg-secundaria {
+    background-color: var(--cor-secundaria) !important;
+}
+
+.text-primaria {
+    color: var(--cor-primaria) !important;
+}
+
+.text-secundaria {
+    color: var(--cor-texto-secundario) !important;
+}
+
+.btn-primario {
+    background-color: var(--cor-primaria);
+    color: var(--cor-fundo);
+    font-weight: 600;
+    border: 1px solid var(--cor-primaria);
+    transition: all 0.3s ease;
+}
+
+.btn-primario:hover {
+    background-color: #4b7e7e; /* Tom mais escuro */
+    border-color: #4b7e7e;
+    color: var(--cor-fundo);
+}
+
+.btn-outline-primario {
+    background-color: transparent;
+    color: var(--cor-primaria);
+    font-weight: 600;
+    border: 1px solid var(--cor-primaria);
+    transition: all 0.3s ease;
+}
+
+.btn-outline-primario:hover {
+    background-color: var(--cor-primaria);
+    color: var(--cor-fundo);
+}
+
+.card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.card-header {
+    background-color: var(--cor-secundaria);
+    color: var(--cor-texto);
+    font-weight: 600;
+}

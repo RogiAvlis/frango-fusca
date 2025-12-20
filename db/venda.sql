@@ -1,0 +1,22 @@
+CREATE TABLE venda (
+    id INT AUTO_INCREMENT NOT NULL,
+    cliente_id INT,
+    vendedor_id INT,
+    ambiente_venda_id INT,
+    data_venda TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    valor_total DECIMAL(10,2),
+    metodo_pagamento_id INT NOT NULL,
+    maquina_id INT DEFAULT NULL,
+    criado_por INT NOT NULL,
+    data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    alterado_por INT DEFAULT NULL,
+    data_alteracao TIMESTAMP DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    FOREIGN KEY (criado_por) REFERENCES usuario(id),
+    FOREIGN KEY (alterado_por) REFERENCES usuario(id),
+    FOREIGN KEY (cliente_id) REFERENCES cliente(id),
+    FOREIGN KEY (vendedor_id) REFERENCES usuario(id),
+    FOREIGN KEY (metodo_pagamento_id) REFERENCES metodo_pagamento(id),
+    FOREIGN KEY (maquina_id) REFERENCES maquina_venda(id),
+    FOREIGN KEY (ambiente_venda_id) REFERENCES ambiente_venda(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
