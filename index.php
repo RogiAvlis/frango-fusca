@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php require_once __DIR__ . '/templates/header.php'; ?>
-    <link rel="stylesheet" href="<?= BASE_URL; ?>/assets/css/login.css">
+    <link rel="stylesheet" href="/assets/css/login.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <title>Login | Frango do Fusca</title>
 </head>
 <body class="login-page">
 
     <div class="login-card">
-        <img src="<?= BASE_URL; ?>/assets/img/frango_fusca_alternativa_3_sem_fundo.png" 
+        <img src="/assets/img/frango_fusca_alternativa_3_sem_fundo.png" 
              alt="Logo Frango do Fusca" class="login-logo">
         
         <form action="auth.php" method="POST">

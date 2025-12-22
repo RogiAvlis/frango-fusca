@@ -6,7 +6,7 @@ CREATE TABLE custo_mensal (
     descricao VARCHAR(100) NOT NULL,
     valor DECIMAL(10,2) NOT NULL,
     data_pagamento DATE NOT NULL,
-    mes MONTH NOT NULL,
+    mes INT NOT NULL,
     ano YEAR NOT NULL,
     criado_por INT NOT NULL,
     data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
