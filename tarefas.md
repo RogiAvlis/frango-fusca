@@ -2,28 +2,28 @@
 
 Este documento detalha todas as atividades necessárias para a conclusão do sistema "Frango Fusca", organizado por módulos e sub-tarefas, abrangendo back-end, front-end e banco de dados.
 
-## 1. Configuração do Ambiente e Arquitetura Base
+## 1. Configuração do Ambiente e Arquitetura Base - [CONCLUÍDO]
 
-*   **1.1. Conexão com o Banco de Dados:**
-    *   Criar o arquivo `src/db/database.php`.
-    *   Implementar a conexão utilizando PDO (PHP Data Objects) para garantir segurança e flexibilidade.
-    *   Configurar as credenciais do banco de dados a partir de `config/config.php`.
-    *   Incluir tratamento de erros básico para a conexão.
-*   **1.2. Definição da Estrutura de Pastas (Back-end):**
-    *   Garantir a existência das seguintes pastas no diretório `src/`:
-        *   `src/consultar/`: Para scripts de leitura de dados.
-        *   `src/cadastrar/`: Para scripts de inserção de dados.
-        *   `src/editar/`: Para scripts de atualização de dados.
-        *   `src/deletar/`: Para scripts de exclusão de dados.
-        *   `src/entidades/`: Para as classes PHP que representam as entidades do banco de dados.
-        *   `src/core/`: Para classes utilitárias ou base, como uma classe de entidade genérica.
-*   **1.3. Classe Base para Entidades (Opcional, mas recomendado):**
-    *   Criar o arquivo `src/core/EntidadeBase.php` (ou similar).
-    *   Definir uma classe abstrata ou interface para padronizar métodos comuns de CRUD (cadastrar, listar, buscarPorId, editar, deletar) que serão implementados pelas entidades específicas.
-*   **1.4. Estrutura da Página Base (Front-end):**
-    *   Revisar o `templates/header.php` para garantir que inclua todas as bibliotecas CSS (Bootstrap, Font Awesome) e JS (jQuery, Bootstrap, DataTables) necessárias globalmente.
-    *   Revisar o `templates/footer.php` para incluir scripts JS globais e fechar tags HTML.
-    *   Criar uma página PHP modelo (`template_crud.php` ou similar) que inclua o `header.php`, `footer.php` e tenha a estrutura básica para uma tabela e um modal de CRUD, servindo como ponto de partida para cada entidade.
+*   [x] **1.1. Conexão com o Banco de Dados:**
+    *   [x] Criar o arquivo `src/db/database.php`.
+    *   [x] Implementar a conexão utilizando PDO.
+    *   [x] Configurar as credenciais do banco de dados a partir de `config/config.php`.
+    *   [x] Incluir tratamento de erros básico para a conexão.
+*   [x] **1.2. Definição da Estrutura de Pastas (Back-end):**
+    *   [x] Garantir a existência das seguintes pastas no diretório `src/`:
+        *   `src/consultar/`
+        *   `src/cadastrar/`
+        *   `src/editar/`
+        *   `src/deletar/`
+        *   `src/entidades/`
+        *   `src/core/`
+*   [x] **1.3. Interface Base para Entidades:**
+    *   [x] Criar o arquivo `src/core/IEntidade.php`.
+    *   [x] Definir uma interface para padronizar métodos comuns de CRUD.
+*   [x] **1.4. Estrutura da Página Base (Front-end):**
+    *   [x] Revisar o `templates/header.php` para incluir as bibliotecas CSS (Bootstrap, Font Awesome, DataTables).
+    *   [x] Revisar o `templates/footer.php` para incluir as bibliotecas JS (jQuery, Bootstrap, DataTables).
+    *   [x] Criar uma página PHP modelo (`templates/pagina_crud_modelo.php`) que servirá como base para os CRUDs.
 
 ---
 
