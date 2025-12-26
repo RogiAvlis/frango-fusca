@@ -3,7 +3,10 @@
     "autoload": {
         "psr-4": {
             "FrangoFusca\\": "src/"
-        }
+        },
+        "files": [
+            "src/helpers/request.php"
+        ]
     },
     "authors": [
         {

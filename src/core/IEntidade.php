@@ -1,11 +1,12 @@
 <?php
 
+namespace FrangoFusca\Core;
+
 interface IEntidade {
-    public function obterId(): ?int;
-    public function definirId(int $id): void;
-    public static function cadastrar(array $dados): bool;
-    public static function editar(int $id, array $dados): bool;
-    public static function deletar(int $id): bool;
-    public static function listar(?array $filtros = null): array;
-    public static function buscarPorId(int $id): ?array;
+    public static function query(\PDO $conn, string $coluna = '*', string $join = '', string $filtro = '', array $valor = [], string $ordem = '', string $agrupamento = '', string $limit = ''): \PDOStatement;
+    public static function cadastrar(\PDO $conn, array $dados): bool;
+    public static function editar(\PDO $conn, ?int $id, array $dados): bool;
+    public static function deletar(\PDO $conn, ?int $id): bool;
+    public static function listar(\PDO $conn, ?array $filtros = null): array;
+    public static function buscarPorId(\PDO $conn, ?int $id): ?array;
 }
