@@ -3,6 +3,7 @@ CREATE TABLE custo_mensal (
     status_registro TINYINT DEFAULT 1,
     status_pagamento TINYINT DEFAULT 0,
     tipo_custo enum('fixo', 'variavel') NOT NULL,
+    quantidade_parcela int NOT NULL DEFAULT 1,
     descricao VARCHAR(100) NOT NULL,
     valor DECIMAL(10,2) NOT NULL,
     data_pagamento DATE NOT NULL,

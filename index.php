@@ -1,9 +1,9 @@
+<?php session_start(); ?>
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <?php require_once __DIR__ . '/templates/header.php'; ?>
     <link rel="stylesheet" href="/assets/css/login.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <title>Login | Frango do Fusca</title>
@@ -14,6 +14,15 @@
         <img src="/assets/img/frango_fusca_alternativa_3_sem_fundo.png" 
              alt="Logo Frango do Fusca" class="login-logo">
         
+        <?php if (isset($_SESSION['login_error'])): ?>
+            <div class="alert alert-danger" role="alert">
+                <?php 
+                    echo $_SESSION['login_error']; 
+                    unset($_SESSION['login_error']); // Limpa o erro após exibir
+                ?>
+            </div>
+        <?php endif; ?>
+
         <form action="auth.php" method="POST">
             <div class="my-2">
                 <label class="form-label" for="email">E-mail</label>
@@ -39,7 +48,5 @@
             </div>
         </form>
     </div>
-
-    <?php require_once __DIR__ . '/templates/footer.php'; ?>
 </body>
 </html>

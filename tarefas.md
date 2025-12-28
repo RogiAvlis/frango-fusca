@@ -381,22 +381,22 @@ Este documento detalha todas as atividades necessárias para a conclusão do sis
 *   **2.5.1. Back-end:**
     *   **2.5.1.1. Classe da Entidade `CustoMensal`:**
         *   Criar o arquivo `src/entidades/CustoMensal.php`.
-        *   Definir a classe `CustoMensal` com as propriedades privadas `id`, `status_registro`, `status_pagamento`, `tipo_custo`, `descricao`, `valor`, `data_pagamento`, `mes`, `ano` e seus respectivos métodos `getter` e `setter`.
-        *   Implementar o método estático `cadastrar(status_registro, status_pagamento, tipo_custo, descricao, valor, data_pagamento, mes, ano)`:
+        *   Definir a classe `CustoMensal` com as propriedades privadas `id`, `status_registro`, `status_pagamento`, `tipo_custo`, `quantidade_parcela`, `descricao`, `valor`, `data_pagamento`, `mes`, `ano` e seus respectivos métodos `getter` e `setter`.
+        *   Implementar o método estático `cadastrar(status_registro, status_pagamento, tipo_custo, quantidade_parcela, descricao, valor, data_pagamento, mes, ano)`:
             *   Realizar a conexão via `database.php`.
-            *   Preparar a query SQL `INSERT INTO custo_mensal (status_registro, status_pagamento, tipo_custo, descricao, valor, data_pagamento, mes, ano, criado_por, data_criacao)`.
+            *   Preparar a query SQL `INSERT INTO custo_mensal (status_registro, status_pagamento, tipo_custo, quantidade_parcela, descricao, valor, data_pagamento, mes, ano, criado_por, data_criacao)`.
             *   Executar a query, tratando possíveis erros e retornado um indicador de sucesso/falha.
         *   Implementar o método estático `listar()`:
             *   Realizar a conexão via `database.php`.
-            *   Preparar a query SQL `SELECT id, status_registro, status_pagamento, tipo_custo, descricao, valor, data_pagamento, mes, ano FROM custo_mensal WHERE status_registro = 1`.
+            *   Preparar a query SQL `SELECT id, status_registro, status_pagamento, tipo_custo, quantidade_parcela, descricao, valor, data_pagamento, mes, ano FROM custo_mensal WHERE status_registro = 1`.
             *   Executar a query e retornar um array de objetos `CustoMensal` ou um array associativo dos dados, adequado para consumo pelo DataTable.
         *   Implementar o método estático `buscarPorId(id)`:
             *   Realizar a conexão via `database.php`.
-            *   Preparar a query SQL `SELECT id, status_registro, status_pagamento, tipo_custo, descricao, valor, data_pagamento, mes, ano FROM custo_mensal WHERE id = :id AND status_registro = 1`.
+            *   Preparar a query SQL `SELECT id, status_registro, status_pagamento, tipo_custo, quantidade_parcela, descricao, valor, data_pagamento, mes, ano FROM custo_mensal WHERE id = :id AND status_registro = 1`.
             *   Executar a query e retornar um objeto `CustoMensal` ou `null` se não encontrado.
-        *   Implementar o método estático `editar(id, status_registro, status_pagamento, tipo_custo, descricao, valor, data_pagamento, mes, ano)`:
+        *   Implementar o método estático `editar(id, status_registro, status_pagamento, tipo_custo, quantidade_parcela, descricao, valor, data_pagamento, mes, ano)`:
             *   Realizar a conexão via `database.php`.
-            *   Preparar a query SQL `UPDATE custo_mensal SET status_registro = :status_registro, status_pagamento = :status_pagamento, tipo_custo = :tipo_custo, descricao = :descricao, valor = :valor, data_pagamento = :data_pagamento, mes = :mes, ano = :ano, alterado_por = :alterado_por, data_alteracao = CURRENT_TIMESTAMP WHERE id = :id`.
+            *   Preparar a query SQL `UPDATE custo_mensal SET status_registro = :status_registro, status_pagamento = :status_pagamento, tipo_custo = :tipo_custo, quantidade_parcela = :quantidade_parcela, descricao = :descricao, valor = :valor, data_pagamento = :data_pagamento, mes = :mes, ano = :ano, alterado_por = :alterado_por, data_alteracao = CURRENT_TIMESTAMP WHERE id = :id`.
             *   Executar a query, tratando erros e retornado um indicador de sucesso/falha.
         *   Implementar o método estático `deletar(id)` (Exclusão Lógica):
             *   Realizar a conexão via `database.php`.
@@ -406,7 +406,7 @@ Este documento detalha todas as atividades necessárias para a conclusão do sis
     *   **2.5.1.2. Endpoints AJAX (PHP):**
         *   **`src/cadastrar/custo_mensal.php`:**
             *   Verificar se a requisição é POST.
-            *   Validar e sanitizar os dados de entrada (`status_registro`, `status_pagamento`, `tipo_custo`, `descricao`, `valor`, `data_pagamento`, `mes`, `ano`).
+            *   Validar e sanitizar os dados de entrada (`status_registro`, `status_pagamento`, `tipo_custo`, `quantidade_parcela`, `descricao`, `valor`, `data_pagamento`, `mes`, `ano`).
             *   Chamar `CustoMensal::cadastrar()`.
             *   Retornar uma resposta JSON com sucesso ou erro.
         *   **`src/consultar/custo_mensal.php`:**
@@ -418,7 +418,7 @@ Este documento detalha todas as atividades necessárias para a conclusão do sis
             *   Retornar uma resposta JSON com os dados do custo mensal ou erro.
         *   **`src/editar/custo_mensal.php`:**
             *   Verificar se a requisição é POST.
-            *   Validar e sanitizar os dados de entrada (`id`, `status_registro`, `status_pagamento`, `tipo_custo`, `descricao`, `valor`, `data_pagamento`, `mes`, `ano`).
+            *   Validar e sanitizar os dados de entrada (`id`, `status_registro`, `status_pagamento`, `tipo_custo`, `quantidade_parcela`, `descricao`, `valor`, `data_pagamento`, `mes`, `ano`).
             *   Chamar `CustoMensal::editar()`.
             *   Retornar uma resposta JSON com sucesso ou erro.
         *   **`src/deletar/custo_mensal.php`:**
