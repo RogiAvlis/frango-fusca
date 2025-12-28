@@ -19,7 +19,8 @@ try {
 
     $conn = Conexao::obterConexao();
     
-    if (MaquinaVenda::cadastrar($conn, $dados)) {
+    $maquinaVenda = new MaquinaVenda();
+    if ($maquinaVenda->cadastrar($conn, $dados)) {
         echo json_encode(['status' => 'success', 'message' => 'Máquina de venda cadastrada com sucesso!']);
     } else {
         http_response_code(500);

@@ -14,7 +14,8 @@ try {
     $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 
     $conn = Conexao::obterConexao();
-    $metodo = MetodoPagamento::buscarPorId($conn, $id);
+    $metodoPagamento = new MetodoPagamento();
+    $metodo = $metodoPagamento->buscarPorId($conn, $id);
     
     if ($metodo) {
         echo json_encode($metodo);

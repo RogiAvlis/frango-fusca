@@ -21,7 +21,8 @@ try {
 
     $conn = Conexao::obterConexao();
     
-    if (ItemVenda::cadastrar($conn, $dados)) {
+    $itemVenda = new ItemVenda();
+    if ($itemVenda->cadastrar($conn, $dados)) {
         echo json_encode(['status' => 'success', 'message' => 'Item de venda cadastrado com sucesso!']);
     } else {
         http_response_code(500);

@@ -8,7 +8,15 @@ class CustoMensal implements IEntidade
 {
     private static string $tabela = 'custo_mensal';
 
-    public static function validar(\PDO $conn, array $dados, ?int $id = null): array
+    /**
+     * Valida os dados para cadastro ou edição de um custo mensal.
+     *
+     * @param \PDO $conn A conexão com o banco de dados.
+     * @param array $dados Os dados a serem validados.
+     * @param int|null $id O ID do registro (ignorado nesta implementação).
+     * @return array Um array com os erros de validação.
+     */
+    public function validar(\PDO $conn, array $dados, ?int $id = null): array
     {
         $erros = [];
         $camposObrigatorios = ['tipo_custo', 'descricao', 'valor', 'data_pagamento', 'mes', 'ano'];
@@ -53,11 +61,17 @@ class CustoMensal implements IEntidade
         return $erros;
     }
 
-    public static function query(\PDO $conn, string $coluna = '*', string $join = '', string $filtro = '', array $valor = [], string $ordem = '', string $agrupamento = '', string $limit = ''): \PDOStatement
+    /**
+     * Constrói e executa uma consulta SQL, filtrando automaticamente por `status_registro = 1`.
+     */
+    public function query(\PDO $conn, string $coluna = '*', string $join = '', string $filtro = '', array $valor = [], string $ordem = '', string $agrupamento = '', string $limit = ''): \PDOStatement
     {
         $sql = "SELECT {$coluna} FROM " . self::$tabela;
         if (!empty($join)) $sql .= " {$join}";
-        if (!empty($filtro)) $sql .= " WHERE {$filtro}";
+
+        $sql .= " WHERE status_registro = 1";
+        if (!empty($filtro)) $sql .= " AND {$filtro}";
+
         if (!empty($agrupamento)) $sql .= " GROUP BY {$agrupamento}";
         if (!empty($ordem)) $sql .= " ORDER BY {$ordem}";
         if (!empty($limite)) $sql .= " LIMIT {$limite}";
@@ -68,94 +82,110 @@ class CustoMensal implements IEntidade
         return $stmt;
     }
 
-    public static function cadastrar(\PDO $conn, array $dados): bool
+    /**
+     * Cadastra um novo custo mensal.
+     * `data_criacao` e `status_registro` são gerenciados pelo banco de dados.
+     */
+    public function cadastrar(\PDO $conn, array $dados): bool
     {
-        $erros = self::validar($conn, $dados);
+        $erros = $this->validar($conn, $dados);
         if (!empty($erros)) {
             throw new \Exception(implode("\n", $erros), 400);
         }
 
         $sql = "INSERT INTO " . self::$tabela . " 
-                    (status_registro, status_pagamento, tipo_custo, quantidade_parcela, descricao, valor, data_pagamento, mes, ano, criado_por, data_criacao) 
-                    VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, 1, NOW())";
+                    (status_pagamento, tipo_custo, quantidade_parcela, descricao, valor, data_pagamento, mes, ano, criado_por) 
+                    VALUES (:status_pagamento, :tipo_custo, :quantidade_parcela, :descricao, :valor, :data_pagamento, :mes, :ano, 1)";
         
         $stmt = $conn->prepare($sql);
         return $stmt->execute([
-            (int)($dados['status_pagamento'] ?? 0),
-            $dados['tipo_custo'],
-            (int)($dados['quantidade_parcela'] ?? 1),
-            $dados['descricao'],
-            (float)$dados['valor'],
-            $dados['data_pagamento'],
-            (int)$dados['mes'],
-            (int)$dados['ano']
+            ':status_pagamento' => (int)($dados['status_pagamento'] ?? 0),
+            ':tipo_custo' => $dados['tipo_custo'],
+            ':quantidade_parcela' => (int)($dados['quantidade_parcela'] ?? 1),
+            ':descricao' => $dados['descricao'],
+            ':valor' => (float)$dados['valor'],
+            ':data_pagamento' => $dados['data_pagamento'],
+            ':mes' => (int)$dados['mes'],
+            ':ano' => (int)$dados['ano']
         ]);
     }
 
-    public static function editar(\PDO $conn, ?int $id, array $dados): bool
+    /**
+     * Edita um custo mensal existente.
+     * `data_alteracao` é gerenciado automaticamente pelo banco de dados.
+     */
+    public function editar(\PDO $conn, ?int $id, array $dados): bool
     {
         if (empty($id)) {
             throw new \Exception("ID é obrigatório para edição.", 400);
         }
-
-        if (!self::buscarPorId($conn, $id)) {
-            throw new \Exception("ID #$id não encontrado.", 404);
+        if (!$this->buscarPorId($conn, $id)) {
+            throw new \Exception("O registro não foi encontrado.", 404);
         }
 
-        $erros = self::validar($conn, $dados, $id);
+        $erros = $this->validar($conn, $dados, $id);
         if (!empty($erros)) {
             throw new \Exception(implode("\n", $erros), 400);
         }
 
         $sql = "UPDATE " . self::$tabela . " SET 
-                    status_pagamento = ?, tipo_custo = ?, quantidade_parcela = ?, descricao = ?, 
-                    valor = ?, data_pagamento = ?, mes = ?, ano = ?,
-                    alterado_por = 1, data_alteracao = NOW() 
-                WHERE id = ?";
+                    status_pagamento = :status_pagamento, tipo_custo = :tipo_custo, quantidade_parcela = :quantidade_parcela, 
+                    descricao = :descricao, valor = :valor, data_pagamento = :data_pagamento, mes = :mes, ano = :ano,
+                    alterado_por = 1
+                WHERE id = :id";
         
         $stmt = $conn->prepare($sql);
         return $stmt->execute([
-            (int)($dados['status_pagamento'] ?? 0),
-            $dados['tipo_custo'],
-            (int)($dados['quantidade_parcela'] ?? 1),
-            $dados['descricao'],
-            (float)$dados['valor'],
-            $dados['data_pagamento'],
-            (int)$dados['mes'],
-            (int)$dados['ano'],
-            $id
+            ':status_pagamento' => (int)($dados['status_pagamento'] ?? 0),
+            ':tipo_custo' => $dados['tipo_custo'],
+            ':quantidade_parcela' => (int)($dados['quantidade_parcela'] ?? 1),
+            ':descricao' => $dados['descricao'],
+            ':valor' => (float)$dados['valor'],
+            ':data_pagamento' => $dados['data_pagamento'],
+            ':mes' => (int)$dados['mes'],
+            ':ano' => (int)$dados['ano'],
+            ':id' => $id
         ]);
     }
 
-    public static function deletar(\PDO $conn, ?int $id): bool
+    /**
+     * Realiza a exclusão lógica de um custo mensal, definindo `status_registro` como 0.
+     * `data_alteracao` é gerenciado automaticamente pelo banco de dados.
+     */
+    public function deletar(\PDO $conn, ?int $id): bool
     {
         if (empty($id)) {
             throw new \Exception("ID é obrigatório para exclusão.", 400);
         }
-
-        if (!self::buscarPorId($conn, $id)) {
-            throw new \Exception("ID #$id não encontrado.", 404);
+        if (!$this->buscarPorId($conn, $id)) {
+            throw new \Exception("O registro não foi encontrado.", 404);
         }
 
-        $sql = "UPDATE " . self::$tabela . " SET status_registro = 0, alterado_por = 1, data_alteracao = NOW() WHERE id = ?";
+        $sql = "UPDATE " . self::$tabela . " SET status_registro = 0, alterado_por = 1 WHERE id = :id";
         $stmt = $conn->prepare($sql);
-        return $stmt->execute([$id]);
+        return $stmt->execute([':id' => $id]);
     }
 
-    public static function listar(\PDO $conn, ?array $filtros = null): array
+    /**
+     * Lista todos os custos mensais ativos.
+     */
+    public function listar(\PDO $conn, ?string $filtro = null, ?array $valor = null): array
     {
         $cols = 'id, status_pagamento, tipo_custo, quantidade_parcela, descricao, valor, data_pagamento, mes, ano';
-        $stmt = self::query($conn, $cols, '', 'status_registro = 1');
+        $stmt = $this->query($conn, coluna: $cols, filtro: $filtro, valor: $valor);
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
-    public static function buscarPorId(\PDO $conn, ?int $id): ?array
+    /**
+     * Busca um custo mensal ativo pelo seu ID.
+     */
+    public function buscarPorId(\PDO $conn, ?int $id): ?array
     {
         if (empty($id)) {
             throw new \Exception("ID é obrigatório para busca.", 400);
         }
         $cols = 'id, status_pagamento, tipo_custo, quantidade_parcela, descricao, valor, data_pagamento, mes, ano';
-        $stmt = self::query($conn, $cols, '', 'id = ? AND status_registro = 1', [$id]);
+        $stmt = $this->query($conn, coluna: $cols, filtro: 'id = :id', valor: [':id' => $id]);
         $resultado = $stmt->fetch(\PDO::FETCH_ASSOC);
         return $resultado ?: null;
     }

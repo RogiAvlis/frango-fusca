@@ -19,7 +19,8 @@ try {
 
     $conn = Conexao::obterConexao();
     
-    if (Cliente::cadastrar($conn, $dados)) {
+    $cliente = new Cliente();
+    if ($cliente->cadastrar($conn, $dados)) {
         echo json_encode(['status' => 'success', 'message' => 'Cliente cadastrado com sucesso!']);
     } else {
         http_response_code(500);

@@ -8,42 +8,49 @@ class UnidadeMedida implements IEntidade
 {
     private static string $tabela = 'unidade_medida';
 
-    public static function validar(\PDO $conn, array $dados, ?int $id = null): array
+    /**
+     * Valida os dados para cadastro ou edição de uma unidade de medida.
+     *
+     * @param \PDO $conn A conexão com o banco de dados.
+     * @param array $dados Os dados a serem validados.
+     * @param int|null $id O ID do registro para edição.
+     * @return array Um array com os erros de validação.
+     */
+    public function validar(\PDO $conn, array $dados, ?int $id = null): array
     {
         $erros = [];
 
-        if (empty(trim($dados['sigla']))) {
-            $erros['sigla'] = 'A sigla é obrigatória.';
-        }
-
-        if (empty(trim($dados['nome']))) {
-            $erros['nome'] = 'O nome é obrigatório.';
-        }
+        if (empty(trim($dados['sigla']))) $erros['sigla'] = 'A sigla é obrigatória.';
+        if (empty(trim($dados['nome']))) $erros['nome'] = 'O nome é obrigatório.';
 
         if (empty($erros)) {
-            $filtro = '(sigla = ? OR nome = ?)';
-            $valores = [$dados['sigla'], $dados['nome']];
+            $filtro = '(sigla = :sigla OR nome = :nome)';
+            $valores = [':sigla' => $dados['sigla'], ':nome' => $dados['nome']];
 
             if ($id !== null) {
-                $filtro .= ' AND id != ?';
-                $valores[] = $id;
+                $filtro .= ' AND id != :id';
+                $valores[':id'] = $id;
             }
             
-            $stmt = self::query($conn, 'id', '', $filtro, $valores);
-
-            if ($stmt->fetch()) {
-                $erros['duplicidade'] = 'Sigla ou nome já cadastrado.';
+            if ($this->query($conn, 'id', '', $filtro, $valores)->fetch()) {
+                $erros['duplicidade'] = 'Sigla ou nome já cadastrado em um registro ativo.';
             }
         }
 
         return $erros;
     }
 
-    public static function query(\PDO $conn, string $coluna = '*', string $join = '', string $filtro = '', array $valor = [], string $ordem = '', string $agrupamento = '', string $limit = ''): \PDOStatement
+    /**
+     * Constrói e executa uma consulta SQL, filtrando automaticamente por `status_registro = 1`.
+     */
+    public function query(\PDO $conn, string $coluna = '*', string $join = '', string $filtro = '', array $valor = [], string $ordem = '', string $agrupamento = '', string $limit = ''): \PDOStatement
     {
         $sql = "SELECT {$coluna} FROM " . self::$tabela;
         if (!empty($join)) $sql .= " {$join}";
-        if (!empty($filtro)) $sql .= " WHERE {$filtro}";
+
+        $sql .= " WHERE status_registro = 1";
+        if (!empty($filtro)) $sql .= " AND {$filtro}";
+
         if (!empty($agrupamento)) $sql .= " GROUP BY {$agrupamento}";
         if (!empty($ordem)) $sql .= " ORDER BY {$ordem}";
         if (!empty($limite)) $sql .= " LIMIT {$limite}";
@@ -54,65 +61,68 @@ class UnidadeMedida implements IEntidade
         return $stmt;
     }
 
-    public static function cadastrar(\PDO $conn, array $dados): bool
+    /**
+     * Cadastra uma nova unidade de medida.
+     * `data_criacao` e `status_registro` são gerenciados pelo banco de dados.
+     */
+    public function cadastrar(\PDO $conn, array $dados): bool
     {
-        $erros = self::validar($conn, $dados);
-        if (!empty($erros)) {
-            throw new \Exception(implode("\n", $erros), 400);
-        }
+        $erros = $this->validar($conn, $dados);
+        if (!empty($erros)) throw new \Exception(implode("\n", $erros), 400);
 
-        $sql = "INSERT INTO " . self::$tabela . " (sigla, nome, criado_por, data_criacao) VALUES (?, ?, 1, NOW())";
+        $sql = "INSERT INTO " . self::$tabela . " (sigla, nome, criado_por) VALUES (:sigla, :nome, 1)";
         $stmt = $conn->prepare($sql);
-        return $stmt->execute([$dados['sigla'], $dados['nome']]);
+        return $stmt->execute([':sigla' => $dados['sigla'], ':nome' => $dados['nome']]);
     }
 
-    public static function editar(\PDO $conn, ?int $id, array $dados): bool
+    /**
+     * Edita uma unidade de medida existente.
+     * `data_alteracao` é gerenciado automaticamente pelo banco de dados.
+     */
+    public function editar(\PDO $conn, ?int $id, array $dados): bool
     {
-        if (empty($id)) {
-            throw new \Exception("ID é obrigatório para edição.", 400);
-        }
+        if (empty($id)) throw new \Exception("ID é obrigatório para edição.", 400);
+        if (!$this->buscarPorId($conn, $id)) throw new \Exception("O registro não foi encontrado.", 404);
 
-        if (!self::buscarPorId($conn, $id)) {
-            throw new \Exception("ID #$id não encontrado.", 404);
-        }
+        $erros = $this->validar($conn, $dados, $id);
+        if (!empty($erros)) throw new \Exception(implode("\n", $erros), 400);
 
-        $erros = self::validar($conn, $dados, $id);
-        if (!empty($erros)) {
-            throw new \Exception(implode("\n", $erros), 400);
-        }
-
-        $sql = "UPDATE " . self::$tabela . " SET sigla = ?, nome = ?, alterado_por = 1, data_alteracao = NOW() WHERE id = ?";
+        $sql = "UPDATE " . self::$tabela . " SET sigla = :sigla, nome = :nome, alterado_por = 1 WHERE id = :id";
         $stmt = $conn->prepare($sql);
-        return $stmt->execute([$dados['sigla'], $dados['nome'], $id]);
+        return $stmt->execute([':sigla' => $dados['sigla'], ':nome' => $dados['nome'], ':id' => $id]);
     }
 
-    public static function deletar(\PDO $conn, ?int $id): bool
+    /**
+     * Realiza a exclusão lógica de uma unidade de medida.
+     * `data_alteracao` é gerenciado automaticamente pelo banco de dados.
+     */
+    public function deletar(\PDO $conn, ?int $id): bool
     {
-        if (empty($id)) {
-            throw new \Exception("ID é obrigatório para exclusão.", 400);
-        }
+        if (empty($id)) throw new \Exception("ID é obrigatório para exclusão.", 400);
+        if (!$this->buscarPorId($conn, $id)) throw new \Exception("O registro não foi encontrado.", 404);
 
-        if (!self::buscarPorId($conn, $id)) {
-            throw new \Exception("ID #$id não encontrado.", 404);
-        }
-
-        $sql = "UPDATE " . self::$tabela . " SET status_registro = 0, alterado_por = 1, data_alteracao = NOW() WHERE id = ?";
+        $sql = "UPDATE " . self::$tabela . " SET status_registro = 0, alterado_por = 1 WHERE id = :id";
         $stmt = $conn->prepare($sql);
-        return $stmt->execute([$id]);
+        return $stmt->execute([':id' => $id]);
     }
 
-    public static function listar(\PDO $conn, ?array $filtros = null): array
+    /**
+     * Lista todas as unidades de medida ativas.
+     */
+    public function listar(\PDO $conn, ?string $filtro = null, ?array $valor = null): array
     {
-        $stmt = self::query($conn, 'id, sigla, nome', '', 'status_registro = 1');
+        $stmt = $this->query($conn, 'id, sigla, nome', '', $filtro, $valor);
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
-    public static function buscarPorId(\PDO $conn, ?int $id): ?array
+    /**
+     * Busca uma unidade de medida ativa pelo seu ID.
+     */
+    public function buscarPorId(\PDO $conn, ?int $id): ?array
     {
-        if (empty($id)) {
-            throw new \Exception("ID é obrigatório para busca.", 400);
-        }
-        $stmt = self::query($conn, 'id, sigla, nome', '', 'id = ? AND status_registro = 1', [$id]);
+        if (empty($id)) return null;
+
+        $stmt = $this->query($conn, 'id, sigla, nome', '', 'id = :id', [':id' => $id]);
         $resultado = $stmt->fetch(\PDO::FETCH_ASSOC);
         return $resultado ?: null;
     }

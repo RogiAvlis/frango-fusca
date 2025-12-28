@@ -12,7 +12,8 @@ verificarMetodo('GET');
 
 try {
     $conn = Conexao::obterConexao();
-    $ambientes = AmbienteVenda::listar($conn);
+    $ambienteVenda = new AmbienteVenda();
+    $ambientes = $ambienteVenda->listar($conn);
     echo json_encode(['data' => $ambientes]);
 } catch (\Exception $e) {
     http_response_code(500);

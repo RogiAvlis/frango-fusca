@@ -14,7 +14,8 @@ try {
     $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 
     $conn = Conexao::obterConexao();
-    $custo = CustoMensal::buscarPorId($conn, $id);
+    $custoMensal = new CustoMensal();
+    $custo = $custoMensal->buscarPorId($conn, $id);
     
     if ($custo) {
         echo json_encode($custo);

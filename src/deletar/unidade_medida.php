@@ -15,7 +15,8 @@ try {
     
     $conn = Conexao::obterConexao();
     
-    if (UnidadeMedida::deletar($conn, $id)) {
+    $unidadeMedida = new UnidadeMedida();
+    if ($unidadeMedida->deletar($conn, $id)) {
         echo json_encode(['status' => 'success', 'message' => 'Unidade de medida deletada com sucesso!']);
     } else {
         // Esta condição é menos provável com a validação de ID dentro do método

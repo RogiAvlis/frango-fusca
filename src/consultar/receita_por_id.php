@@ -14,7 +14,8 @@ try {
     $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 
     $conn = Conexao::obterConexao();
-    $receita = Receita::buscarPorId($conn, $id);
+    $receita = new Receita();
+    $receita = $receita->buscarPorId($conn, $id);
     
     if ($receita) {
         echo json_encode($receita);

@@ -12,7 +12,8 @@ verificarMetodo('GET');
 
 try {
     $conn = Conexao::obterConexao();
-    $produtos = Produto::listar($conn);
+    $produto = new Produto();
+    $produtos = $produto->listar($conn);
     
     // Formata os dados para o select: id, texto (nome)
     $resultado = array_map(function($produto) {

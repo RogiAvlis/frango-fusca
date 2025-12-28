@@ -13,7 +13,8 @@ verificarMetodo('GET');
 try {
     $conn = Conexao::obterConexao();
     
-    $unidades = UnidadeMedida::listar($conn);
+    $unidadeMedida = new UnidadeMedida();
+    $unidades = $unidadeMedida->listar($conn);
     
     // Formata a saída para o DataTables, dentro de um objeto "data"
     echo json_encode(['data' => $unidades]);

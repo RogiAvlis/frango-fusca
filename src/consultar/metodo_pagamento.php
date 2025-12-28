@@ -12,7 +12,8 @@ verificarMetodo('GET');
 
 try {
     $conn = Conexao::obterConexao();
-    $metodos = MetodoPagamento::listar($conn);
+    $metodoPagamento = new MetodoPagamento();
+    $metodos = $metodoPagamento->listar($conn);
     echo json_encode(['data' => $metodos]);
 } catch (\Exception $e) {
     http_response_code(500);

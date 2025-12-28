@@ -8,7 +8,15 @@ class MaquinaVenda implements IEntidade
 {
     private static string $tabela = 'maquina_venda';
 
-    public static function validar(\PDO $conn, array $dados, ?int $id = null): array
+    /**
+     * Valida os dados para cadastro ou edição de uma máquina de venda.
+     *
+     * @param \PDO $conn A conexão com o banco de dados.
+     * @param array $dados Os dados a serem validados.
+     * @param int|null $id O ID do registro para evitar auto-duplicação na edição.
+     * @return array Um array com os erros de validação.
+     */
+    public function validar(\PDO $conn, array $dados, ?int $id = null): array
     {
         $erros = [];
 
@@ -16,21 +24,21 @@ class MaquinaVenda implements IEntidade
             $erros['nome'] = 'O nome é obrigatório.';
         }
 
-        if (isset($dados['taxa']) && !is_numeric($dados['taxa']) || (float)$dados['taxa'] < 0) {
+        if (isset($dados['taxa']) && (!is_numeric($dados['taxa']) || (float)$dados['taxa'] < 0)) {
             $erros['taxa'] = 'A taxa deve ser um valor numérico não negativo.';
         }
 
-        // Validação de duplicidade para 'nome'
         if (empty($erros) && !empty(trim($dados['nome']))) {
-            $filtro = 'nome = ?';
-            $valores = [$dados['nome']];
+            $filtro = 'nome = :nome';
+            $valores = [':nome' => $dados['nome']];
 
             if ($id !== null) {
-                $filtro .= ' AND id != ?';
-                $valores[] = $id;
+                $filtro .= ' AND id != :id';
+                $valores[':id'] = $id;
             }
             
-            $stmt = self::query($conn, 'id', '', $filtro, $valores);
+            // A query já busca em registros com `status_registro = 1`, prevenindo duplicidade em registros ativos.
+            $stmt = $this->query($conn, coluna: 'id', filtro: $filtro, valor: $valores);
 
             if ($stmt->fetch()) {
                 $erros['duplicidade'] = 'Já existe uma máquina de venda com este nome.';
@@ -40,11 +48,18 @@ class MaquinaVenda implements IEntidade
         return $erros;
     }
 
-    public static function query(\PDO $conn, string $coluna = '*', string $join = '', string $filtro = '', array $valor = [], string $ordem = '', string $agrupamento = '', string $limit = ''): \PDOStatement
+    /**
+     * Constrói e executa uma consulta SQL, filtrando automaticamente por `status_registro = 1`.
+     */
+    public function query(\PDO $conn, string $coluna = '*', string $join = '', string $filtro = '', array $valor = [], string $ordem = '', string $agrupamento = '', string $limit = ''): \PDOStatement
     {
         $sql = "SELECT {$coluna} FROM " . self::$tabela;
         if (!empty($join)) $sql .= " {$join}";
-        if (!empty($filtro)) $sql .= " WHERE {$filtro}";
+
+        // Garante que todos os resultados sejam de registros ativos.
+        $sql .= " WHERE status_registro = 1";
+        if (!empty($filtro)) $sql .= " AND {$filtro}";
+
         if (!empty($agrupamento)) $sql .= " GROUP BY {$agrupamento}";
         if (!empty($ordem)) $sql .= " ORDER BY {$ordem}";
         if (!empty($limite)) $sql .= " LIMIT {$limite}";
@@ -55,75 +70,90 @@ class MaquinaVenda implements IEntidade
         return $stmt;
     }
 
-    public static function cadastrar(\PDO $conn, array $dados): bool
+    /**
+     * Cadastra uma nova máquina de venda.
+     * `data_criacao` e `status_registro` são gerenciados pelo banco de dados.
+     */
+    public function cadastrar(\PDO $conn, array $dados): bool
     {
-        $erros = self::validar($conn, $dados);
+        $erros = $this->validar($conn, $dados);
         if (!empty($erros)) {
             throw new \Exception(implode("\n", $erros), 400);
         }
 
-        $sql = "INSERT INTO " . self::$tabela . " (status_registro, nome, descricao, taxa, criado_por, data_criacao) VALUES (1, ?, ?, ?, 1, NOW())";
+        $sql = "INSERT INTO " . self::$tabela . " (nome, descricao, taxa, criado_por) VALUES (:nome, :descricao, :taxa, 1)";
         $stmt = $conn->prepare($sql);
         return $stmt->execute([
-            $dados['nome'],
-            empty($dados['descricao']) ? null : $dados['descricao'],
-            (float)($dados['taxa'] ?? 0.00)
+            ':nome' => $dados['nome'],
+            ':descricao' => empty($dados['descricao']) ? null : $dados['descricao'],
+            ':taxa' => (float)($dados['taxa'] ?? 0.00)
         ]);
     }
 
-    public static function editar(\PDO $conn, ?int $id, array $dados): bool
+    /**
+     * Edita uma máquina de venda existente.
+     * `data_alteracao` é gerenciado automaticamente pelo banco de dados.
+     */
+    public function editar(\PDO $conn, ?int $id, array $dados): bool
     {
         if (empty($id)) {
             throw new \Exception("ID é obrigatório para edição.", 400);
         }
-
-        if (!self::buscarPorId($conn, $id)) {
-            throw new \Exception("ID #$id não encontrado.", 404);
+        if (!$this->buscarPorId($conn, $id)) {
+            throw new \Exception("O registro não foi encontrado.", 404);
         }
 
-        $erros = self::validar($conn, $dados, $id);
+        $erros = $this->validar($conn, $dados, $id);
         if (!empty($erros)) {
             throw new \Exception(implode("\n", $erros), 400);
         }
 
-        $sql = "UPDATE " . self::$tabela . " SET nome = ?, descricao = ?, taxa = ?, alterado_por = 1, data_alteracao = NOW() WHERE id = ?";
+        $sql = "UPDATE " . self::$tabela . " SET nome = :nome, descricao = :descricao, taxa = :taxa, alterado_por = 1 WHERE id = :id";
         $stmt = $conn->prepare($sql);
         return $stmt->execute([
-            $dados['nome'],
-            empty($dados['descricao']) ? null : $dados['descricao'],
-            (float)($dados['taxa'] ?? 0.00),
-            $id
+            ':nome' => $dados['nome'],
+            ':descricao' => empty($dados['descricao']) ? null : $dados['descricao'],
+            ':taxa' => (float)($dados['taxa'] ?? 0.00),
+            ':id' => $id
         ]);
     }
 
-    public static function deletar(\PDO $conn, ?int $id): bool
+    /**
+     * Realiza a exclusão lógica de uma máquina de venda.
+     * `data_alteracao` é gerenciado automaticamente pelo banco de dados.
+     */
+    public function deletar(\PDO $conn, ?int $id): bool
     {
         if (empty($id)) {
             throw new \Exception("ID é obrigatório para exclusão.", 400);
         }
-
-        if (!self::buscarPorId($conn, $id)) {
-            throw new \Exception("ID #$id não encontrado.", 404);
+        if (!$this->buscarPorId($conn, $id)) {
+            throw new \Exception("O registro não foi encontrado.", 404);
         }
 
-        // Exclusão lógica
-        $sql = "UPDATE " . self::$tabela . " SET status_registro = 0, alterado_por = 1, data_alteracao = NOW() WHERE id = ?";
+        $sql = "UPDATE " . self::$tabela . " SET status_registro = 0, alterado_por = 1 WHERE id = :id";
         $stmt = $conn->prepare($sql);
-        return $stmt->execute([$id]);
+        return $stmt->execute([':id' => $id]);
     }
 
-    public static function listar(\PDO $conn, ?array $filtros = null): array
+    /**
+     * Lista todas as máquinas de venda ativas.
+     */
+    public function listar(\PDO $conn, ?string $filtro = null, ?array $valor = null): array
     {
-        $stmt = self::query($conn, 'id, nome, descricao, taxa', '', 'status_registro = 1');
+        $stmt = $this->query($conn, 'id, nome, descricao, taxa', '', $filtro, $valor);
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
-    public static function buscarPorId(\PDO $conn, ?int $id): ?array
+    /**
+     * Busca uma máquina de venda ativa pelo seu ID.
+     */
+    public function buscarPorId(\PDO $conn, ?int $id): ?array
     {
         if (empty($id)) {
             throw new \Exception("ID é obrigatório para busca.", 400);
         }
-        $stmt = self::query($conn, 'id, nome, descricao, taxa', '', 'id = ? AND status_registro = 1', [$id]);
+        $stmt = $this->query($conn, 'id, nome, descricao, taxa', '', 'id = :id', [':id' => $id]);
         $resultado = $stmt->fetch(\PDO::FETCH_ASSOC);
         return $resultado ?: null;
     }

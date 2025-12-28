@@ -14,7 +14,8 @@ try {
     $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 
     $conn = Conexao::obterConexao();
-    $usuario = Usuario::buscarPorId($conn, $id);
+    $usuario = new Usuario();
+    $usuario = $usuario->buscarPorId($conn, $id);
     
     if ($usuario) {
         echo json_encode($usuario);

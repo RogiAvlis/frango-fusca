@@ -18,7 +18,9 @@ try {
     }
 
     $conn = Conexao::obterConexao();
-    $itens = ItemVenda::listarPorVenda($conn, $vendaId);
+    $itemVenda = new ItemVenda();
+    
+    $itens = $itemVenda->listar($conn, 'venda_id = :venda_id', [':venda_id' => $vendaId]);
     echo json_encode(['data' => $itens]);
 } catch (\Exception $e) {
     $codigo = $e->getCode() == 0 ? 400 : $e->getCode();

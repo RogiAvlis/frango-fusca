@@ -8,7 +8,15 @@ class MetodoPagamento implements IEntidade
 {
     private static string $tabela = 'metodo_pagamento';
 
-    public static function validar(\PDO $conn, array $dados, ?int $id = null): array
+    /**
+     * Valida os dados para cadastro ou edição de um método de pagamento.
+     *
+     * @param \PDO $conn A conexão com o banco de dados.
+     * @param array $dados Os dados a serem validados.
+     * @param int|null $id O ID do registro para evitar auto-duplicação na edição.
+     * @return array Um array com os erros de validação.
+     */
+    public function validar(\PDO $conn, array $dados, ?int $id = null): array
     {
         $erros = [];
 
@@ -16,23 +24,22 @@ class MetodoPagamento implements IEntidade
             $erros['nome'] = 'O nome é obrigatório.';
         }
 
-        // Validação de duplicidade
         if (empty($erros)) {
-            $filtro = 'nome = ? AND banco <=> ? AND agencia <=> ? AND conta <=> ?';
+            // O operador `<=>` (spaceship) é usado para comparações seguras com NULL.
+            $filtro = 'nome = :nome AND banco <=> :banco AND agencia <=> :agencia AND conta <=> :conta';
             $valores = [
-                $dados['nome'],
-                empty($dados['banco']) ? null : $dados['banco'],
-                empty($dados['agencia']) ? null : $dados['agencia'],
-                empty($dados['conta']) ? null : $dados['conta']
+                ':nome' => $dados['nome'],
+                ':banco' => empty($dados['banco']) ? null : $dados['banco'],
+                ':agencia' => empty($dados['agencia']) ? null : $dados['agencia'],
+                ':conta' => empty($dados['conta']) ? null : $dados['conta']
             ];
 
             if ($id !== null) {
-                $filtro .= ' AND id != ?';
-                $valores[] = $id;
+                $filtro .= ' AND id != :id';
+                $valores[':id'] = $id;
             }
             
-            // Usamos o operador <=> para comparar com NULL de forma segura
-            $stmt = self::query($conn, 'id', '', $filtro, $valores);
+            $stmt = $this->query($conn, coluna: 'id', filtro: $filtro, valor: $valores);
 
             if ($stmt->fetch()) {
                 $erros['duplicidade'] = 'Já existe um método de pagamento com estes dados.';
@@ -42,7 +49,11 @@ class MetodoPagamento implements IEntidade
         return $erros;
     }
 
-    public static function query(\PDO $conn, string $coluna = '*', string $join = '', string $filtro = '', array $valor = [], string $ordem = '', string $agrupamento = '', string $limit = ''): \PDOStatement
+    /**
+     * Constrói e executa uma consulta SQL genérica na tabela.
+     * Nota: Esta tabela não usa exclusão lógica (status_registro).
+     */
+    public function query(\PDO $conn, string $coluna = '*', string $join = '', string $filtro = '', array $valor = [], string $ordem = '', string $agrupamento = '', string $limit = ''): \PDOStatement
     {
         $sql = "SELECT {$coluna} FROM " . self::$tabela;
         if (!empty($join)) $sql .= " {$join}";
@@ -57,66 +68,83 @@ class MetodoPagamento implements IEntidade
         return $stmt;
     }
 
-    public static function cadastrar(\PDO $conn, array $dados): bool
+    /**
+     * Cadastra um novo método de pagamento.
+     * `data_criacao` é gerenciado automaticamente pelo banco de dados.
+     */
+    public function cadastrar(\PDO $conn, array $dados): bool
     {
-        $erros = self::validar($conn, $dados);
+        $erros = $this->validar($conn, $dados);
         if (!empty($erros)) {
             throw new \Exception(implode("\n", $erros), 400);
         }
 
-        $sql = "INSERT INTO " . self::$tabela . " (nome, banco, agencia, conta, criado_por, data_criacao) VALUES (?, ?, ?, ?, 1, NOW())";
+        $sql = "INSERT INTO " . self::$tabela . " (nome, banco, agencia, conta, criado_por) VALUES (:nome, :banco, :agencia, :conta, 1)";
         $stmt = $conn->prepare($sql);
-        return $stmt->execute([$dados['nome'], $dados['banco'], $dados['agencia'], $dados['conta']]);
+        return $stmt->execute([
+            ':nome' => $dados['nome'],
+            ':banco' => empty($dados['banco']) ? null : $dados['banco'],
+            ':agencia' => empty($dados['agencia']) ? null : $dados['agencia'],
+            ':conta' => empty($dados['conta']) ? null : $dados['conta']
+        ]);
     }
 
-    public static function editar(\PDO $conn, ?int $id, array $dados): bool
+    /**
+     * Edita um método de pagamento existente.
+     * `data_alteracao` é gerenciado automaticamente pelo banco de dados.
+     */
+    public function editar(\PDO $conn, ?int $id, array $dados): bool
     {
-        if (empty($id)) {
-            throw new \Exception("ID é obrigatório para edição.", 400);
-        }
+        if (empty($id)) throw new \Exception("ID é obrigatório para edição.", 400);
+        if (!$this->buscarPorId($conn, $id)) throw new \Exception("O registro não foi encontrado.", 404);
 
-        if (!self::buscarPorId($conn, $id)) {
-            throw new \Exception("ID #$id não encontrado.", 404);
-        }
+        $erros = $this->validar($conn, $dados, $id);
+        if (!empty($erros)) throw new \Exception(implode("\n", $erros), 400);
 
-        $erros = self::validar($conn, $dados, $id);
-        if (!empty($erros)) {
-            throw new \Exception(implode("\n", $erros), 400);
-        }
-
-        $sql = "UPDATE " . self::$tabela . " SET nome = ?, banco = ?, agencia = ?, conta = ?, alterado_por = 1, data_alteracao = NOW() WHERE id = ?";
+        $sql = "UPDATE " . self::$tabela . " SET nome = :nome, banco = :banco, agencia = :agencia, conta = :conta, alterado_por = 1 WHERE id = :id";
         $stmt = $conn->prepare($sql);
-        return $stmt->execute([$dados['nome'], $dados['banco'], $dados['agencia'], $dados['conta'], $id]);
+        return $stmt->execute([
+            ':nome' => $dados['nome'],
+            ':banco' => empty($dados['banco']) ? null : $dados['banco'],
+            ':agencia' => empty($dados['agencia']) ? null : $dados['agencia'],
+            ':conta' => empty($dados['conta']) ? null : $dados['conta'],
+            ':id' => $id
+        ]);
     }
 
-    public static function deletar(\PDO $conn, ?int $id): bool
+    /**
+     * Realiza a exclusão física de um método de pagamento.
+     * CUIDADO: Esta ação é irreversível.
+     */
+    public function deletar(\PDO $conn, ?int $id): bool
     {
-        if (empty($id)) {
-            throw new \Exception("ID é obrigatório para exclusão.", 400);
-        }
+        if (empty($id)) throw new \Exception("ID é obrigatório para exclusão.", 400);
+        if (!$this->buscarPorId($conn, $id)) throw new \Exception("O registro não foi encontrado.", 404);
 
-        if (!self::buscarPorId($conn, $id)) {
-            throw new \Exception("ID #$id não encontrado.", 404);
-        }
-
-        // Exclusão física, conforme especificado
-        $sql = "DELETE FROM " . self::$tabela . " WHERE id = ?";
+        $sql = "DELETE FROM " . self::$tabela . " WHERE id = :id";
         $stmt = $conn->prepare($sql);
-        return $stmt->execute([$id]);
+        return $stmt->execute([':id' => $id]);
     }
 
-    public static function listar(\PDO $conn, ?array $filtros = null): array
+    /**
+     * Lista todos os métodos de pagamento.
+     */
+    public function listar(\PDO $conn, ?string $filtro = null, ?array $valor = null): array
     {
-        $stmt = self::query($conn, 'id, nome, banco, agencia, conta');
+        $cols = 'id, nome, banco, agencia, conta';
+        $stmt = $this->query($conn, coluna: $cols, filtro: $filtro, valor: $valor);
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
-    public static function buscarPorId(\PDO $conn, ?int $id): ?array
+    /**
+     * Busca um método de pagamento pelo seu ID.
+     */
+    public function buscarPorId(\PDO $conn, ?int $id): ?array
     {
-        if (empty($id)) {
-            throw new \Exception("ID é obrigatório para busca.", 400);
-        }
-        $stmt = self::query($conn, 'id, nome, banco, agencia, conta', '', 'id = ?', [$id]);
+        if (empty($id)) throw new \Exception("ID é obrigatório para busca.", 400);
+
+        $cols = 'id, nome, banco, agencia, conta';
+        $stmt = $this->query($conn, coluna: $cols, filtro: 'id = :id', valor: [':id' => $id]);
         $resultado = $stmt->fetch(\PDO::FETCH_ASSOC);
         return $resultado ?: null;
     }

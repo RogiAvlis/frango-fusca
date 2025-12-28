@@ -14,10 +14,12 @@ try {
     $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 
     $conn = Conexao::obterConexao();
-    $itemVenda = ItemVenda::buscarPorId($conn, $id);
-    
-    if ($itemVenda) {
-        echo json_encode($itemVenda);
+    $itemVenda = new ItemVenda();
+
+    $item = $itemVenda->buscarPorId($conn, $id);
+
+    if ($item) {
+        echo json_encode($item);
     } else {
         http_response_code(404);
         echo json_encode(['error' => 'Item de venda não encontrado.']);

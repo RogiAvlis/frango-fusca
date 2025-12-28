@@ -15,7 +15,8 @@ try {
     
     $conn = Conexao::obterConexao();
     
-    if (Usuario::deletar($conn, $id)) {
+    $usuario = new Usuario();
+    if ($usuario->deletar($conn, $id)) {
         echo json_encode(['status' => 'success', 'message' => 'Usuário deletado com sucesso!']);
     } else {
         http_response_code(500);

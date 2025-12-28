@@ -24,7 +24,8 @@ try {
 
     $conn = Conexao::obterConexao();
     
-    if (Fornecedor::editar($conn, $id, $dados)) {
+    $fornecedor = new Fornecedor();
+    if ($fornecedor->editar($conn, $id, $dados)) {
         echo json_encode(['status' => 'success', 'message' => 'Fornecedor atualizado com sucesso!']);
     } else {
         echo json_encode(['status' => 'info', 'message' => 'Nenhuma alteração foi feita (dados iguais).']);

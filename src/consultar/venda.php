@@ -12,7 +12,8 @@ verificarMetodo('GET');
 
 try {
     $conn = Conexao::obterConexao();
-    $vendas = Venda::listar($conn);
+    $venda = new Venda();
+    $vendas = $venda->listar($conn);
     echo json_encode(['data' => $vendas]);
 } catch (\Exception $e) {
     http_response_code(500);

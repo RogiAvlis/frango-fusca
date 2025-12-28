@@ -22,7 +22,8 @@ try {
 
     $conn = Conexao::obterConexao();
     
-    $vendaId = Venda::cadastrar($conn, $dados);
+    $venda = new Venda();
+    $vendaId = $venda->cadastrar($conn, $dados);
     if ($vendaId) {
         echo json_encode(['status' => 'success', 'message' => 'Venda cadastrada com sucesso!', 'venda_id' => $vendaId]);
     } else {

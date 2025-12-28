@@ -19,7 +19,8 @@ try {
 
     $conn = Conexao::obterConexao();
     
-    if (AmbienteVenda::cadastrar($conn, $dados)) {
+    $ambienteVenda = new AmbienteVenda();
+    if ($ambienteVenda->cadastrar($conn, $dados)) {
         echo json_encode(['status' => 'success', 'message' => 'Ambiente de venda cadastrado com sucesso!']);
     } else {
         http_response_code(500);

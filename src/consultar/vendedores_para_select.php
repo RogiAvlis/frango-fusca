@@ -12,7 +12,8 @@ verificarMetodo('GET');
 
 try {
     $conn = Conexao::obterConexao();
-    $usuarios = Usuario::listar($conn); // Assume que qualquer usuário pode ser vendedor, ou o filtro é no frontend
+    $usuario = new Usuario();
+    $usuarios = $usuario->listar($conn); // Assume que qualquer usuário pode ser vendedor, ou o filtro é no frontend
     
     // Formata os dados para o select: id, texto (nome)
     $resultado = array_map(function($usuario) {

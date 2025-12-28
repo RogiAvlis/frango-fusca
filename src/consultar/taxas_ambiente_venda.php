@@ -12,7 +12,8 @@ verificarMetodo('GET');
 
 try {
     $conn = Conexao::obterConexao();
-    $ambientes = AmbienteVenda::listar($conn);
+    $ambienteVenda = new AmbienteVenda();
+    $ambientes = $ambienteVenda->listar($conn);
     
     // Formata os dados para a simulação: id, texto (nome), e a taxa
     $resultado = array_map(function($ambiente) {

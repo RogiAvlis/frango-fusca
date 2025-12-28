@@ -15,7 +15,8 @@ try {
     
     $conn = Conexao::obterConexao();
     
-    if (MaquinaVenda::deletar($conn, $id)) {
+    $maquinaVenda = new MaquinaVenda();
+    if ($maquinaVenda->deletar($conn, $id)) {
         echo json_encode(['status' => 'success', 'message' => 'Máquina de venda deletada com sucesso!']);
     } else {
         http_response_code(500);

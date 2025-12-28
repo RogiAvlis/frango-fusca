@@ -26,7 +26,8 @@ try {
 
     $conn = Conexao::obterConexao();
     
-    if (CustoMensal::editar($conn, $id, $dados)) {
+    $custoMensal = new CustoMensal();
+    if ($custoMensal->editar($conn, $id, $dados)) {
         echo json_encode(['status' => 'success', 'message' => 'Custo mensal atualizado com sucesso!']);
     } else {
         echo json_encode(['status' => 'info', 'message' => 'Nenhuma alteração foi feita (dados iguais).']);

@@ -12,7 +12,8 @@ verificarMetodo('GET');
 
 try {
     $conn = Conexao::obterConexao();
-    $custos = CustoMensal::listar($conn);
+    $custoMensal = new CustoMensal();
+    $custos = $custoMensal->listar($conn);
     echo json_encode(['data' => $custos]);
 } catch (\Exception $e) {
     http_response_code(500);

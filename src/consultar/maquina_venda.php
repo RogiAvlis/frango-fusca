@@ -12,7 +12,8 @@ verificarMetodo('GET');
 
 try {
     $conn = Conexao::obterConexao();
-    $maquinas = MaquinaVenda::listar($conn);
+    $maquinaVenda = new MaquinaVenda();
+    $maquinas = $maquinaVenda->listar($conn);
     echo json_encode(['data' => $maquinas]);
 } catch (\Exception $e) {
     http_response_code(500);

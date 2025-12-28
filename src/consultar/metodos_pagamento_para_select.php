@@ -12,7 +12,8 @@ verificarMetodo('GET');
 
 try {
     $conn = Conexao::obterConexao();
-    $metodos = MetodoPagamento::listar($conn);
+    $metodoPagamento = new MetodoPagamento();
+    $metodos = $metodoPagamento->listar($conn);
     
     // Formata os dados para o select: id, texto (nome)
     $resultado = array_map(function($metodo) {

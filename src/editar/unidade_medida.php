@@ -20,7 +20,8 @@ try {
 
     $conn = Conexao::obterConexao();
     
-    if (UnidadeMedida::editar($conn, $id, $dados)) {
+    $unidadeMedida = new UnidadeMedida();
+    if ($unidadeMedida->editar($conn, $id, $dados)) {
         echo json_encode(['status' => 'success', 'message' => 'Unidade de medida atualizada com sucesso!']);
     } else {
         echo json_encode(['status' => 'info', 'message' => 'Nenhuma alteração foi feita (dados iguais).']);

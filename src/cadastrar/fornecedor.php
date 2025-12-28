@@ -22,7 +22,8 @@ try {
 
     $conn = Conexao::obterConexao();
     
-    if (Fornecedor::cadastrar($conn, $dados)) {
+    $fornecedor = new Fornecedor();
+    if ($fornecedor->cadastrar($conn, $dados)) {
         echo json_encode(['status' => 'success', 'message' => 'Fornecedor cadastrado com sucesso!']);
     } else {
         http_response_code(500);

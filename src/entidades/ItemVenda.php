@@ -3,120 +3,76 @@
 namespace FrangoFusca\Entidades;
 
 use FrangoFusca\Core\IEntidade;
-use FrangoFusca\Entidades\Produto; // Para ajustar o estoque
 
 class ItemVenda implements IEntidade
 {
     private static string $tabela = 'item_venda';
 
-    // Propriedades privadas
-    private int $id;
-    private int $status_registro;
-    private int $venda_id;
-    private int $produto_id;
-    private int $quantidade;
-    private float $preco_venda;
-
-    // Getters
-    public function getId(): int { return $this->id; }
-    public function getStatusRegistro(): int { return $this->status_registro; }
-    public function getVendaId(): int { return $this->venda_id; }
-    public function getProdutoId(): int { return $this->produto_id; }
-    public function getQuantidade(): int { return $this->quantidade; }
-    public function getPrecoVenda(): float { return $this->preco_venda; }
-
-    // Setters (para uso interno, por exemplo, na hidratação de objetos)
-    public function setId(int $id): void { $this->id = $id; }
-    public function setStatusRegistro(int $status_registro): void { $this->status_registro = $status_registro; }
-    public function setVendaId(int $venda_id): void { $this->venda_id = $venda_id; }
-    public function setProdutoId(int $produto_id): void { $this->produto_id = $produto_id; }
-    public function setQuantidade(int $quantidade): void { $this->quantidade = $quantidade; }
-    public function setPrecoVenda(float $preco_venda): void { $this->preco_venda = $preco_venda; }
-
-
     /**
-     * Valida os dados para cadastro ou edição de Item de Venda.
+     * Valida os dados para cadastro ou edição de um item de venda.
      *
-     * @param \PDO $conn Conexão com o banco de dados.
-     * @param array $dados Dados a serem validados.
-     * @param int|null $id ID do registro (usado na edição para ignorar o próprio registro na verificação de duplicidade).
-     * @return array Retorna um array de erros. Se vazio, a validação passou.
+     * @param \PDO $conn A conexão com o banco de dados.
+     * @param array $dados Os dados a serem validados.
+     * @param int|null $id O ID do registro para edição.
+     * @return array Um array com os erros de validação.
      */
-    public static function validar(\PDO $conn, array $dados, ?int $id = null): array
+    public function validar(\PDO $conn, array $dados, ?int $id = null): array
     {
         $erros = [];
+        $venda = new Venda();
+        $produto = new Produto();
 
-        // Validação de Venda ID
-        if (!isset($dados['venda_id']) || !is_numeric($dados['venda_id']) || (int)$dados['venda_id'] <= 0) {
+        if (empty($dados['venda_id']) || !is_numeric($dados['venda_id'])) {
             $erros['venda_id'] = 'O ID da venda é obrigatório.';
-        } else {
-            // Verifica se a Venda existe
-            if (!Venda::buscarPorId($conn, (int)$dados['venda_id'])) {
-                $erros['venda_id'] = 'Venda não encontrada.';
-            }
+        } elseif (!$venda->buscarPorId($conn, (int)$dados['venda_id'])) {
+            $erros['venda_id'] = 'Venda não encontrada.';
         }
 
-        // Validação de Produto ID
-        if (!isset($dados['produto_id']) || !is_numeric($dados['produto_id']) || (int)$dados['produto_id'] <= 0) {
+        if (empty($dados['produto_id']) || !is_numeric($dados['produto_id'])) {
             $erros['produto_id'] = 'O ID do produto é obrigatório.';
-        } else {
-            // Verifica se o Produto existe
-            if (!Produto::buscarPorId($conn, (int)$dados['produto_id'])) {
-                $erros['produto_id'] = 'Produto não encontrado.';
-            }
+        } elseif (!$produto->buscarPorId($conn, (int)$dados['produto_id'])) {
+            $erros['produto_id'] = 'Produto não encontrado.';
         }
 
-        // Validação de Quantidade
         if (!isset($dados['quantidade']) || !is_numeric($dados['quantidade']) || (int)$dados['quantidade'] <= 0) {
             $erros['quantidade'] = 'A quantidade deve ser um número inteiro positivo.';
-        } else {
-            // Verifica disponibilidade em estoque (apenas no cadastro ou se a quantidade aumentar na edição)
-            if ($id === null || (isset($dados['quantidade_antiga']) && (int)$dados['quantidade'] > (int)$dados['quantidade_antiga'])) {
-                $produto = Produto::buscarPorId($conn, (int)$dados['produto_id']);
-                if ($produto && (int)$dados['quantidade'] > $produto['quantidade_comprada']) {
-                    $erros['quantidade'] = 'Quantidade indisponível em estoque para este produto.';
-                }
-            }
         }
 
-        // Validação de Preço de Venda
         if (!isset($dados['preco_venda']) || !is_numeric($dados['preco_venda']) || (float)$dados['preco_venda'] < 0) {
             $erros['preco_venda'] = 'O preço de venda deve ser um valor numérico não negativo.';
         }
 
-        // Validação de duplicidade: Um produto pode aparecer apenas uma vez por venda (se for para somar, a edição deve ser usada)
-        if (empty($erros) && isset($dados['venda_id']) && isset($dados['produto_id'])) {
-            $filtro = 'venda_id = ? AND produto_id = ? AND status_registro = 1';
-            $valores = [$dados['venda_id'], $dados['produto_id']];
+        if (empty($erros)) {
+            $filtro = 'venda_id = :venda_id AND produto_id = :produto_id';
+            $valores = [':venda_id' => $dados['venda_id'], ':produto_id' => $dados['produto_id']];
 
             if ($id !== null) {
-                $filtro .= ' AND id != ?';
-                $valores[] = $id;
+                $filtro .= ' AND id != :id';
+                $valores[':id'] = $id;
             }
-            
-            $stmt = self::query($conn, 'id', '', $filtro, $valores);
 
-            if ($stmt->fetch()) {
+            if ($this->query($conn, 'id', '', $filtro, $valores)->fetch()) {
                 $erros['duplicidade'] = 'Este produto já foi adicionado a esta venda.';
             }
         }
         
-        // Validação de status_registro
-        if (isset($dados['status_registro']) && !in_array((int)$dados['status_registro'], [0, 1])) {
-            $erros['status_registro'] = 'Status de registro inválido. Deve ser 0 (inativo) ou 1 (ativo).';
-        }
-
         return $erros;
     }
 
-    public static function query(\PDO $conn, string $coluna = '*', string $join = '', string $filtro = '', array $valor = [], string $ordem = '', string $agrupamento = '', string $limit = ''): \PDOStatement
+    /**
+     * Constrói e executa uma consulta SQL, filtrando automaticamente por `status_registro = 1`.
+     */
+    public function query(\PDO $conn, string $coluna = '*', string $join = '', string $filtro = '', array $valor = [], string $ordem = '', string $agrupamento = '', string $limit = ''): \PDOStatement
     {
-        $sql = "SELECT {$coluna} FROM " . self::$tabela;
+        $sql = "SELECT {$coluna} FROM " . self::$tabela . " iv"; // Alias 'iv'
         if (!empty($join)) $sql .= " {$join}";
-        if (!empty($filtro)) $sql .= " WHERE {$filtro}";
+        
+        $sql .= " WHERE iv.status_registro = 1";
+        if (!empty($filtro)) $sql .= " AND {$filtro}";
+
         if (!empty($agrupamento)) $sql .= " GROUP BY {$agrupamento}";
         if (!empty($ordem)) $sql .= " ORDER BY {$ordem}";
-        if (!empty($limite)) $sql .= " LIMIT {$limite}";
+        if (!empty($limit)) $sql .= " LIMIT {$limit}";
 
         $stmt = $conn->prepare($sql);
         $stmt->execute($valor);
@@ -124,9 +80,13 @@ class ItemVenda implements IEntidade
         return $stmt;
     }
 
-    public static function cadastrar(\PDO $conn, array $dados): bool
+    /**
+     * Cadastra um novo item de venda e ajusta o estoque do produto.
+     * `data_criacao` e `status_registro` são gerenciados pelo banco de dados.
+     */
+    public function cadastrar(\PDO $conn, array $dados): bool
     {
-        $erros = self::validar($conn, $dados);
+        $erros = $this->validar($conn, $dados);
         if (!empty($erros)) {
             throw new \Exception(implode("\n", $erros), 400);
         }
@@ -134,30 +94,20 @@ class ItemVenda implements IEntidade
         $conn->beginTransaction();
         try {
             $sql = "INSERT INTO " . self::$tabela . " 
-                        (status_registro, venda_id, produto_id, quantidade, preco_venda, criado_por, data_criacao) 
-                        VALUES (?, ?, ?, ?, ?, 1, NOW())";
+                        (venda_id, produto_id, quantidade, preco_venda, criado_por) 
+                        VALUES (:venda_id, :produto_id, :quantidade, :preco_venda, 1)";
             
             $stmt = $conn->prepare($sql);
             $sucesso = $stmt->execute([
-                (int)($dados['status_registro'] ?? 1), // Padrão ativo
-                (int)$dados['venda_id'],
-                (int)$dados['produto_id'],
-                (int)$dados['quantidade'],
-                (float)$dados['preco_venda']
+                ':venda_id' => (int)$dados['venda_id'],
+                ':produto_id' => (int)$dados['produto_id'],
+                ':quantidade' => (int)$dados['quantidade'],
+                ':preco_venda' => (float)$dados['preco_venda']
             ]);
 
             if ($sucesso) {
-                // Ajustar estoque do produto
-                $produto = Produto::buscarPorId($conn, (int)$dados['produto_id']);
-                if ($produto) {
-                    $novaQuantidade = $produto['quantidade_comprada'] - (int)$dados['quantidade'];
-                    if ($novaQuantidade < 0) {
-                        throw new \Exception("Quantidade insuficiente em estoque para o produto.", 400);
-                    }
-                    $sqlProduto = "UPDATE " . Produto::getTabela() . " SET quantidade_comprada = ?, alterado_por = 1, data_alteracao = NOW() WHERE id = ?";
-                    $stmtProduto = $conn->prepare($sqlProduto);
-                    $stmtProduto->execute([$novaQuantidade, (int)$dados['produto_id']]);
-                }
+                $produto = new Produto();
+                $produto->ajustarEstoque($conn, (int)$dados['produto_id'], -(int)$dados['quantidade']);
             }
 
             $conn->commit();
@@ -168,75 +118,50 @@ class ItemVenda implements IEntidade
         }
     }
 
-    public static function editar(\PDO $conn, ?int $id, array $dados): bool
+    /**
+     * Edita um item de venda existente e ajusta o estoque dos produtos envolvidos.
+     * `data_alteracao` é gerenciado automaticamente pelo banco de dados.
+     */
+    public function editar(\PDO $conn, ?int $id, array $dados): bool
     {
-        if (empty($id)) {
-            throw new \Exception("ID é obrigatório para edição.", 400);
-        }
+        if (empty($id)) throw new \Exception("ID é obrigatório para edição.", 400);
+        
+        $itemExistente = $this->buscarPorId($conn, $id);
+        if (!$itemExistente) throw new \Exception("O registro não foi encontrado.", 404);
 
-        $itemExistente = self::buscarPorId($conn, $id);
-        if (!$itemExistente) {
-            throw new \Exception("ID #$id não encontrado.", 404);
-        }
-
-        // Adiciona a quantidade antiga para validação de estoque
-        $dados['quantidade_antiga'] = $itemExistente['quantidade'];
-        $erros = self::validar($conn, $dados, $id);
-        if (!empty($erros)) {
-            throw new \Exception(implode("\n", $erros), 400);
-        }
+        $erros = $this->validar($conn, $dados, $id);
+        if (!empty($erros)) throw new \Exception(implode("\n", $erros), 400);
 
         $conn->beginTransaction();
         try {
             $sql = "UPDATE " . self::$tabela . " SET 
-                        status_registro = ?, venda_id = ?, produto_id = ?, quantidade = ?, preco_venda = ?, 
-                        alterado_por = 1, data_alteracao = NOW() 
-                    WHERE id = ?";
+                        venda_id = :venda_id, produto_id = :produto_id, quantidade = :quantidade, 
+                        preco_venda = :preco_venda, alterado_por = 1
+                    WHERE id = :id";
             
             $stmt = $conn->prepare($sql);
             $sucesso = $stmt->execute([
-                (int)($dados['status_registro'] ?? 1),
-                (int)$dados['venda_id'],
-                (int)$dados['produto_id'],
-                (int)$dados['quantidade'],
-                (float)$dados['preco_venda'],
-                $id
+                ':venda_id' => (int)$dados['venda_id'],
+                ':produto_id' => (int)$dados['produto_id'],
+                ':quantidade' => (int)$dados['quantidade'],
+                ':preco_venda' => (float)$dados['preco_venda'],
+                ':id' => $id
             ]);
 
             if ($sucesso) {
-                // Ajustar estoque: se o produto_id mudou ou a quantidade mudou
-                $quantidadeDiferenca = (int)$dados['quantidade'] - (int)$itemExistente['quantidade'];
-                
-                // Reverter estoque do produto antigo se o produto_id mudou
-                if ((int)$dados['produto_id'] !== (int)$itemExistente['produto_id']) {
-                    $produtoAntigo = Produto::buscarPorId($conn, (int)$itemExistente['produto_id']);
-                    if ($produtoAntigo) {
-                        $novaQuantidadeAntiga = $produtoAntigo['quantidade_comprada'] + (int)$itemExistente['quantidade'];
-                        $sqlProdutoAntigo = "UPDATE " . Produto::getTabela() . " SET quantidade_comprada = ?, alterado_por = 1, data_alteracao = NOW() WHERE id = ?";
-                        $stmtProdutoAntigo = $conn->prepare($sqlProdutoAntigo);
-                        $stmtProdutoAntigo->execute([$novaQuantidadeAntiga, (int)$itemExistente['produto_id']]);
-                    }
-                    // Diminuir estoque do novo produto
-                    $produtoNovo = Produto::buscarPorId($conn, (int)$dados['produto_id']);
-                    if ($produtoNovo) {
-                        $novaQuantidadeNova = $produtoNovo['quantidade_comprada'] - (int)$dados['quantidade'];
-                        if ($novaQuantidadeNova < 0) {
-                            throw new \Exception("Quantidade insuficiente em estoque para o novo produto.", 400);
-                        }
-                        $sqlProdutoNovo = "UPDATE " . Produto::getTabela() . " SET quantidade_comprada = ?, alterado_por = 1, data_alteracao = NOW() WHERE id = ?";
-                        $stmtProdutoNovo = $conn->prepare($sqlProdutoNovo);
-                        $stmtProdutoNovo->execute([$novaQuantidadeNova, (int)$dados['produto_id']]);
-                    }
-                } elseif ($quantidadeDiferenca !== 0) { // Se o produto não mudou, mas a quantidade sim
-                    $produto = Produto::buscarPorId($conn, (int)$dados['produto_id']);
-                    if ($produto) {
-                        $novaQuantidade = $produto['quantidade_comprada'] - $quantidadeDiferenca;
-                        if ($novaQuantidade < 0) {
-                            throw new \Exception("Quantidade insuficiente em estoque para o produto atualizado.", 400);
-                        }
-                        $sqlProduto = "UPDATE " . Produto::getTabela() . " SET quantidade_comprada = ?, alterado_por = 1, data_alteracao = NOW() WHERE id = ?";
-                        $stmtProduto = $conn->prepare($sqlProduto);
-                        $stmtProduto->execute([$novaQuantidade, (int)$dados['produto_id']]);
+                $produto = new Produto();
+                $produtoOriginalId = (int)$itemExistente['produto_id'];
+                $produtoNovoId = (int)$dados['produto_id'];
+                $quantidadeOriginal = (int)$itemExistente['quantidade'];
+                $quantidadeNova = (int)$dados['quantidade'];
+
+                if ($produtoOriginalId !== $produtoNovoId) {
+                    $produto->ajustarEstoque($conn, $produtoOriginalId, $quantidadeOriginal); // Devolve ao estoque
+                    $produto->ajustarEstoque($conn, $produtoNovoId, -$quantidadeNova);       // Retira do novo estoque
+                } else {
+                    $diferenca = $quantidadeNova - $quantidadeOriginal;
+                    if ($diferenca !== 0) {
+                        $produto->ajustarEstoque($conn, $produtoOriginalId, -$diferenca);
                     }
                 }
             }
@@ -249,33 +174,26 @@ class ItemVenda implements IEntidade
         }
     }
 
-    public static function deletar(\PDO $conn, ?int $id): bool
+    /**
+     * Realiza a exclusão lógica de um item de venda e reverte o estoque do produto.
+     * `data_alteracao` é gerenciado automaticamente pelo banco de dados.
+     */
+    public function deletar(\PDO $conn, ?int $id): bool
     {
-        if (empty($id)) {
-            throw new \Exception("ID é obrigatório para exclusão.", 400);
-        }
+        if (empty($id)) throw new \Exception("ID é obrigatório para exclusão.", 400);
 
-        $itemExistente = self::buscarPorId($conn, $id);
-        if (!$itemExistente) {
-            throw new \Exception("ID #$id não encontrado.", 404);
-        }
+        $itemExistente = $this->buscarPorId($conn, $id);
+        if (!$itemExistente) throw new \Exception("O registro não foi encontrado.", 404);
 
         $conn->beginTransaction();
         try {
-            // Exclusão lógica
-            $sql = "UPDATE " . self::$tabela . " SET status_registro = 0, alterado_por = 1, data_alteracao = NOW() WHERE id = ?";
+            $sql = "UPDATE " . self::$tabela . " SET status_registro = 0, alterado_por = 1 WHERE id = :id";
             $stmt = $conn->prepare($sql);
-            $sucesso = $stmt->execute([$id]);
+            $sucesso = $stmt->execute([':id' => $id]);
 
             if ($sucesso) {
-                // Reverter a quantidade do produto para o estoque
-                $produto = Produto::buscarPorId($conn, (int)$itemExistente['produto_id']);
-                if ($produto) {
-                    $novaQuantidade = $produto['quantidade_comprada'] + (int)$itemExistente['quantidade'];
-                    $sqlProduto = "UPDATE " . Produto::getTabela() . " SET quantidade_comprada = ?, alterado_por = 1, data_alteracao = NOW() WHERE id = ?";
-                    $stmtProduto = $conn->prepare($sqlProduto);
-                    $stmtProduto->execute([$novaQuantidade, (int)$itemExistente['produto_id']]);
-                }
+                $produto = new Produto();
+                $produto->ajustarEstoque($conn, (int)$itemExistente['produto_id'], (int)$itemExistente['quantidade']);
             }
 
             $conn->commit();
@@ -288,43 +206,40 @@ class ItemVenda implements IEntidade
 
     /**
      * Lista todos os itens de venda ativos para uma venda específica.
-     *
-     * @param \PDO $conn Conexão com o banco de dados.
-     * @param int $vendaId ID da venda.
-     * @return array Retorna um array de itens de venda.
      */
-    public static function listarPorVenda(\PDO $conn, int $vendaId): array
+    public function listarPorVenda(\PDO $conn, int $vendaId): array
     {
         if (empty($vendaId)) {
             throw new \Exception("ID da venda é obrigatório para listar itens.", 400);
         }
         $cols = 'iv.id, iv.venda_id, iv.produto_id, p.nome as produto_nome, iv.quantidade, iv.preco_venda';
         $join = 'JOIN produto p ON iv.produto_id = p.id';
-        $filtro = 'iv.venda_id = ? AND iv.status_registro = 1';
-        $stmt = self::query($conn, $cols, $join, $filtro, [$vendaId], 'p.nome ASC');
+        $filtro = 'iv.venda_id = :venda_id';
+        $stmt = $this->query($conn, $cols, $join, $filtro, [':venda_id' => $vendaId], 'p.nome ASC');
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+    
+    /**
+     * Lista todos os itens de venda ativos.
+     */
+    public function listar(\PDO $conn, ?string $filtro = null, ?array $valor = null): array
+    {
+        $cols = 'iv.id, iv.venda_id, iv.produto_id, p.nome as produto_nome, iv.quantidade, iv.preco_venda';
+        $join = 'JOIN produto p ON iv.produto_id = p.id';
+        $stmt = $this->query($conn, $cols, $join, $filtro, $valor, 'iv.id ASC');
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
     /**
-     * Busca um item de venda pelo ID.
-     *
-     * @param \PDO $conn Conexão com o banco de dados.
-     * @param int|null $id ID do item de venda.
-     * @return array|null Retorna os dados do item de venda ou null se não encontrado/inválido.
+     * Busca um item de venda ativo pelo seu ID.
      */
-    public static function buscarPorId(\PDO $conn, ?int $id): ?array
+    public function buscarPorId(\PDO $conn, ?int $id): ?array
     {
-        if (empty($id)) {
-            throw new \Exception("ID é obrigatório para busca.", 400);
-        }
-        $cols = 'id, status_registro, venda_id, produto_id, quantidade, preco_venda';
-        $stmt = self::query($conn, $cols, '', 'id = ? AND status_registro = 1', [$id]);
+        if (empty($id)) throw new \Exception("ID é obrigatório para busca.", 400);
+
+        $cols = 'id, venda_id, produto_id, quantidade, preco_venda';
+        $stmt = $this->query($conn, coluna: $cols, filtro: 'iv.id = :id', valor: [':id' => $id]);
         $resultado = $stmt->fetch(\PDO::FETCH_ASSOC);
         return $resultado ?: null;
-    }
-
-    // Método auxiliar para obter o nome da tabela do Produto (usado para ajustar o estoque)
-    private static function getTabela(): string {
-        return self::$tabela;
     }
 }

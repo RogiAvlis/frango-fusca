@@ -8,73 +8,65 @@ class Cliente implements IEntidade
 {
     private static string $tabela = 'cliente';
 
-    // Propriedades privadas
-    private int $id;
-    private int $status_registro;
-    private string $nome;
-    private ?string $telefone;
-
-    // Getters
-    public function getId(): int { return $this->id; }
-    public function getStatusRegistro(): int { return $this->status_registro; }
-    public function getNome(): string { return $this->nome; }
-    public function getTelefone(): ?string { return $this->telefone; }
-
-    // Setters (para uso interno, por exemplo, na hidratação de objetos)
-    public function setId(int $id): void { $this->id = $id; }
-    public function setStatusRegistro(int $status_registro): void { $this->status_registro = $status_registro; }
-    public function setNome(string $nome): void { $this->nome = $nome; }
-    public function setTelefone(?string $telefone): void { $this->telefone = $telefone; }
-
-
     /**
-     * Valida os dados para cadastro ou edição de Cliente.
+     * Valida os dados para cadastro ou edição de um cliente.
      *
-     * @param \PDO $conn Conexão com o banco de dados.
-     * @param array $dados Dados a serem validados.
-     * @param int|null $id ID do registro (usado na edição para ignorar o próprio registro na verificação de duplicidade).
-     * @return array Retorna um array de erros. Se vazio, a validação passou.
+     * @param \PDO $conn A conexão com o banco de dados.
+     * @param array $dados Os dados a serem validados.
+     * @param int|null $id O ID do registro (para edições, a fim de evitar auto-duplicação).
+     * @return array Um array com os erros de validação.
      */
-    public static function validar(\PDO $conn, array $dados, ?int $id = null): array
+    public function validar(\PDO $conn, array $dados, ?int $id = null): array
     {
         $erros = [];
 
-        // Validação de Nome obrigatório
         if (empty(trim($dados['nome']))) {
             $erros['nome'] = 'O nome é obrigatório.';
         }
 
-        // Validação de duplicidade para 'nome'
         if (!empty(trim($dados['nome']))) {
-            $filtro = 'nome = ?';
-            $valores = [$dados['nome']];
+            $filtro = 'nome = :nome';
+            $valores = [':nome' => $dados['nome']];
 
             if ($id !== null) {
-                $filtro .= ' AND id != ?';
-                $valores[] = $id;
+                $filtro .= ' AND id != :id';
+                $valores[':id'] = $id;
             }
-            
-            $stmt = self::query($conn, 'id', '', $filtro, $valores);
+
+            // A função query já filtra por `status_registro = 1`,
+            // então a verificação de duplicidade ocorre apenas em registros ativos.
+            $stmt = $this->query($conn, coluna: 'id', filtro: $filtro, valor: $valores);
 
             if ($stmt->fetch()) {
                 $erros['nome'] = 'Já existe um cliente com este nome.';
             }
         }
         
-        // Validação de status_registro
-        if (isset($dados['status_registro']) && !in_array((int)$dados['status_registro'], [0, 1])) {
-            $erros['status_registro'] = 'Status de registro inválido. Deve ser 0 (inativo) ou 1 (ativo).';
-        }
-
-
         return $erros;
     }
 
-    public static function query(\PDO $conn, string $coluna = '*', string $join = '', string $filtro = '', array $valor = [], string $ordem = '', string $agrupamento = '', string $limit = ''): \PDOStatement
+    /**
+     * Constrói e executa uma consulta SQL, filtrando automaticamente por `status_registro = 1`.
+     *
+     * @param \PDO $conn A conexão com o banco de dados.
+     * @param string $coluna As colunas a serem selecionadas.
+     * @param string $join Cláusulas JOIN adicionais.
+     * @param string $filtro Condições WHERE adicionais.
+     * @param array $valor Os valores para os placeholders da consulta.
+     * @param string $ordem A ordenação dos resultados.
+     * @param string $agrupamento O agrupamento dos resultados.
+     * @param string $limit O limite de resultados.
+     * @return \PDOStatement O statement preparado e executado.
+     */
+    public function query(\PDO $conn, string $coluna = '*', string $join = '', string $filtro = '', array $valor = [], string $ordem = '', string $agrupamento = '', string $limit = ''): \PDOStatement
     {
         $sql = "SELECT {$coluna} FROM " . self::$tabela;
         if (!empty($join)) $sql .= " {$join}";
-        if (!empty($filtro)) $sql .= " WHERE {$filtro}";
+
+        // Garante que todos os resultados sejam de registros ativos.
+        $sql .= " WHERE status_registro = 1";
+        if (!empty($filtro)) $sql .= " AND {$filtro}";
+
         if (!empty($agrupamento)) $sql .= " GROUP BY {$agrupamento}";
         if (!empty($ordem)) $sql .= " ORDER BY {$ordem}";
         if (!empty($limite)) $sql .= " LIMIT {$limite}";
@@ -85,97 +77,116 @@ class Cliente implements IEntidade
         return $stmt;
     }
 
-    public static function cadastrar(\PDO $conn, array $dados): bool
+    /**
+     * Cadastra um novo cliente no banco de dados.
+     * O campo `data_criacao` é preenchido automaticamente pelo banco de dados.
+     *
+     * @param \PDO $conn A conexão com o banco de dados.
+     * @param array $dados Os dados do novo registro.
+     * @return bool Retorna true em caso de sucesso.
+     * @throws \Exception Se houver erros de validação.
+     */
+    public function cadastrar(\PDO $conn, array $dados): bool
     {
-        $erros = self::validar($conn, $dados);
+        $erros = $this->validar($conn, $dados);
         if (!empty($erros)) {
             throw new \Exception(implode("\n", $erros), 400);
         }
 
-        $sql = "INSERT INTO " . self::$tabela . " 
-                    (status_registro, nome, telefone, criado_por, data_criacao) 
-                    VALUES (?, ?, ?, 1, NOW())";
-        
+        $sql = "INSERT INTO " . self::$tabela . " (nome, telefone, criado_por) VALUES (:nome, :telefone, 1)";
         $stmt = $conn->prepare($sql);
         return $stmt->execute([
-            (int)($dados['status_registro'] ?? 1), // Padrão ativo
-            $dados['nome'],
-            empty($dados['telefone']) ? null : $dados['telefone']
+            ':nome' => $dados['nome'],
+            ':telefone' => empty($dados['telefone']) ? null : $dados['telefone']
         ]);
     }
 
-    public static function editar(\PDO $conn, ?int $id, array $dados): bool
+    /**
+     * Edita um cliente existente.
+     * O campo `data_alteracao` é atualizado automaticamente pelo banco de dados.
+     *
+     * @param \PDO $conn A conexão com o banco de dados.
+     * @param int|null $id O ID do registro a ser editado.
+     * @param array $dados Os novos dados.
+     * @return bool Retorna true em caso de sucesso.
+     * @throws \Exception Se o ID não for fornecido, o registro não for encontrado ou houver erros de validação.
+     */
+    public function editar(\PDO $conn, ?int $id, array $dados): bool
     {
         if (empty($id)) {
             throw new \Exception("ID é obrigatório para edição.", 400);
         }
-
-        if (!self::buscarPorId($conn, $id)) {
-            throw new \Exception("ID #$id não encontrado.", 404);
+        if (!$this->buscarPorId($conn, $id)) {
+            throw new \Exception("O registro não foi encontrado.", 404);
         }
 
-        $erros = self::validar($conn, $dados, $id);
+        $erros = $this->validar($conn, $dados, $id);
         if (!empty($erros)) {
             throw new \Exception(implode("\n", $erros), 400);
         }
 
-        $sql = "UPDATE " . self::$tabela . " SET 
-                    status_registro = ?, nome = ?, telefone = ?, 
-                    alterado_por = 1, data_alteracao = NOW() 
-                WHERE id = ?";
-        
+        $sql = "UPDATE " . self::$tabela . " SET nome = :nome, telefone = :telefone, alterado_por = 1 WHERE id = :id";
         $stmt = $conn->prepare($sql);
         return $stmt->execute([
-            (int)($dados['status_registro'] ?? 1),
-            $dados['nome'],
-            empty($dados['telefone']) ? null : $dados['telefone'],
-            $id
+            ':nome' => $dados['nome'],
+            ':telefone' => empty($dados['telefone']) ? null : $dados['telefone'],
+            ':id' => $id
         ]);
     }
 
-    public static function deletar(\PDO $conn, ?int $id): bool
+    /**
+     * Realiza a exclusão lógica de um cliente, definindo `status_registro` como 0.
+     *
+     * @param \PDO $conn A conexão com o banco de dados.
+     * @param int|null $id O ID do registro a ser deletado.
+     * @return bool Retorna true em caso de sucesso.
+     * @throws \Exception Se o ID não for fornecido ou o registro não for encontrado.
+     */
+    public function deletar(\PDO $conn, ?int $id): bool
     {
         if (empty($id)) {
             throw new \Exception("ID é obrigatório para exclusão.", 400);
         }
-
-        if (!self::buscarPorId($conn, $id)) {
-            throw new \Exception("ID #$id não encontrado.", 404);
+        if (!$this->buscarPorId($conn, $id)) {
+            throw new \Exception("O registro não foi encontrado.", 404);
         }
 
-        // Exclusão lógica
-        $sql = "UPDATE " . self::$tabela . " SET status_registro = 0, alterado_por = 1, data_alteracao = NOW() WHERE id = ?";
+        // Realiza a exclusão lógica, mantendo o registro no banco.
+        $sql = "UPDATE " . self::$tabela . " SET status_registro = 0, alterado_por = 1 WHERE id = :id";
         $stmt = $conn->prepare($sql);
-        return $stmt->execute([$id]);
+        return $stmt->execute([':id' => $id]);
     }
 
     /**
-     * Lista todos os clientes ativos.
+     * Lista todos os clientes ativos, ordenados por nome.
      *
-     * @param \PDO $conn Conexão com o banco de dados.
-     * @return array Retorna um array de clientes.
+     * @param \PDO $conn A conexão com o banco de dados.
+     * @param string|null $filtro Filtros adicionais para a consulta.
+     * @param array|null $valor Valores para os placeholders do filtro.
+     * @return array Uma lista de clientes.
      */
-    public static function listar(\PDO $conn): array
+    public function listar(\PDO $conn, ?string $filtro = null, ?array $valor = null): array
     {
         $cols = 'id, status_registro, nome, telefone';
-        $stmt = self::query($conn, $cols, '', 'status_registro = 1', [], 'nome ASC');
+        $stmt = $this->query($conn, coluna: $cols, filtro: $filtro, valor: $valor, ordem: 'nome ASC');
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
     /**
-     * Busca um cliente pelo ID.
+     * Busca um cliente ativo pelo seu ID.
      *
-     * @param \PDO $conn Conexão com o banco de dados.
-     * @param int|null $id ID do cliente.
-     * @return array|null Retorna os dados do cliente ou null se não encontrado/inválido.
+     * @param \PDO $conn A conexão com o banco de dados.
+     * @param int|null $id O ID do registro.
+     * @return array|null Retorna os dados do registro ou null se não for encontrado.
+     * @throws \Exception Se o ID não for fornecido.
      */
-    public static function buscarPorId(\PDO $conn, ?int $id): ?array
+    public function buscarPorId(\PDO $conn, ?int $id): ?array
     {
         if (empty($id)) {
             throw new \Exception("ID é obrigatório para busca.", 400);
         }
         $cols = 'id, status_registro, nome, telefone';
-        $stmt = self::query($conn, $cols, '', 'id = ? AND status_registro = 1', [$id]);
+        $stmt = $this->query($conn, coluna: $cols, filtro: 'id = :id', valor: [':id' => $id]);
         $resultado = $stmt->fetch(\PDO::FETCH_ASSOC);
         return $resultado ?: null;
     }

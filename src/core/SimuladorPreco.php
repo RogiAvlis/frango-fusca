@@ -52,7 +52,8 @@ class SimuladorPreco
      */
     public static function buscarTaxaAmbientePorId(\PDO $conn, int $ambiente_venda_id): float
     {
-        $ambiente = AmbienteVenda::buscarPorId($conn, $ambiente_venda_id);
+        $ambienteVenda = new AmbienteVenda();
+        $ambiente = $ambienteVenda->buscarPorId($conn, $ambiente_venda_id);
         return $ambiente ? (float)$ambiente['taxa'] : 0.0;
     }
 
@@ -79,7 +80,8 @@ class SimuladorPreco
      */
     public static function buscarPrecoCustoProdutoPorId(\PDO $conn, int $produto_id): float
     {
-        $produto = Produto::buscarPorId($conn, $produto_id);
-        return $produto ? (float)$produto['preco_custo'] : 0.0;
+        $produto = new Produto();
+        $prod = $produto->buscarPorId($conn, $produto_id);
+        return $prod ? (float)$prod['preco_custo'] : 0.0;
     }
 }

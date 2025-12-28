@@ -14,7 +14,8 @@ try {
     $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 
     $conn = Conexao::obterConexao();
-    $maquina = MaquinaVenda::buscarPorId($conn, $id);
+    $maquinaVenda = new MaquinaVenda();
+    $maquina = $maquinaVenda->buscarPorId($conn, $id);
     
     if ($maquina) {
         echo json_encode($maquina);

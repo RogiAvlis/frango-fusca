@@ -12,7 +12,8 @@ verificarMetodo('GET');
 
 try {
     $conn = Conexao::obterConexao();
-    $clientes = Cliente::listar($conn);
+    $cliente = new Cliente();
+    $clientes = $cliente->listar($conn);
     echo json_encode(['data' => $clientes]);
 } catch (\Exception $e) {
     http_response_code(500);

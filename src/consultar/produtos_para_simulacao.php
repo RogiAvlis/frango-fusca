@@ -12,7 +12,8 @@ verificarMetodo('GET');
 
 try {
     $conn = Conexao::obterConexao();
-    $produtos = Produto::listar($conn);
+    $produto = new Produto();
+    $produtos = $produto->listar($conn);
     
     // Formata os dados para a simulação: id, texto (nome), e o preço de custo
     $resultado = array_map(function($produto) {

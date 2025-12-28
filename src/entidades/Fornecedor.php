@@ -8,84 +8,52 @@ class Fornecedor implements IEntidade
 {
     private static string $tabela = 'fornecedor';
 
-    // Propriedades privadas
-    private int $id;
-    private int $status_registro;
-    private string $nome;
-    private ?string $cnpj_cpf;
-    private ?string $email;
-    private ?string $telefone;
-    private ?string $endereco;
-
-    // Getters
-    public function getId(): int { return $this->id; }
-    public function getStatusRegistro(): int { return $this->status_registro; }
-    public function getNome(): string { return $this->nome; }
-    public function getCnpjCpf(): ?string { return $this->cnpj_cpf; }
-    public function getEmail(): ?string { return $this->email; }
-    public function getTelefone(): ?string { return $this->telefone; }
-    public function getEndereco(): ?string { return $this->endereco; }
-
-    // Setters (para uso interno, por exemplo, na hidratação de objetos)
-    public function setId(int $id): void { $this->id = $id; }
-    public function setStatusRegistro(int $status_registro): void { $this->status_registro = $status_registro; }
-    public function setNome(string $nome): void { $this->nome = $nome; }
-    public function setCnpjCpf(?string $cnpj_cpf): void { $this->cnpj_cpf = $cnpj_cpf; }
-    public function setEmail(?string $email): void { $this->email = $email; }
-    public function setTelefone(?string $telefone): void { $this->telefone = $telefone; }
-    public function setEndereco(?string $endereco): void { $this->endereco = $endereco; }
-
-
     /**
-     * Valida os dados para cadastro ou edição de Fornecedor.
+     * Valida os dados para cadastro ou edição de um fornecedor.
      *
-     * @param \PDO $conn Conexão com o banco de dados.
-     * @param array $dados Dados a serem validados.
-     * @param int|null $id ID do registro (usado na edição para ignorar o próprio registro na verificação de duplicidade).
-     * @return array Retorna um array de erros. Se vazio, a validação passou.
+     * @param \PDO $conn A conexão com o banco de dados.
+     * @param array $dados Os dados a serem validados.
+     * @param int|null $id O ID do registro para evitar auto-duplicação na edição.
+     * @return array Um array com os erros de validação.
      */
-    public static function validar(\PDO $conn, array $dados, ?int $id = null): array
+    public function validar(\PDO $conn, array $dados, ?int $id = null): array
     {
         $erros = [];
 
-        // Validação de Nome obrigatório
         if (empty(trim($dados['nome']))) {
             $erros['nome'] = 'O nome é obrigatório.';
         }
 
-        // Validação de CNPJ/CPF (se fornecido, deve ser único e válido)
         if (!empty(trim($dados['cnpj_cpf']))) {
-            // Pode adicionar validação de formato de CNPJ/CPF aqui, se necessário
-            
-            $filtro = 'cnpj_cpf = ?';
-            $valores = [$dados['cnpj_cpf']];
+            $filtro = 'cnpj_cpf = :cnpj_cpf';
+            $valores = [':cnpj_cpf' => $dados['cnpj_cpf']];
 
             if ($id !== null) {
-                $filtro .= ' AND id != ?';
-                $valores[] = $id;
+                $filtro .= ' AND id != :id';
+                $valores[':id'] = $id;
             }
             
-            $stmt = self::query($conn, 'id', '', $filtro, $valores);
+            // A query já busca em registros com `status_registro = 1`
+            $stmt = $this->query($conn, coluna: 'id', filtro: $filtro, valor: $valores);
 
             if ($stmt->fetch()) {
                 $erros['cnpj_cpf'] = 'Já existe um fornecedor com este CNPJ/CPF.';
             }
         }
 
-        // Validação de E-mail (se fornecido, deve ser válido e único)
         if (!empty(trim($dados['email']))) {
             if (!filter_var($dados['email'], FILTER_VALIDATE_EMAIL)) {
                 $erros['email'] = 'Formato de e-mail inválido.';
             } else {
-                $filtro = 'email = ?';
-                $valores = [$dados['email']];
+                $filtro = 'email = :email';
+                $valores = [':email' => $dados['email']];
 
                 if ($id !== null) {
-                    $filtro .= ' AND id != ?';
-                    $valores[] = $id;
+                    $filtro .= ' AND id != :id';
+                    $valores[':id'] = $id;
                 }
                 
-                $stmt = self::query($conn, 'id', '', $filtro, $valores);
+                $stmt = $this->query($conn, coluna: 'id', filtro: $filtro, valor: $valores);
 
                 if ($stmt->fetch()) {
                     $erros['email'] = 'Já existe um fornecedor com este e-mail.';
@@ -93,20 +61,21 @@ class Fornecedor implements IEntidade
             }
         }
         
-        // Validação de status_registro
-        if (isset($dados['status_registro']) && !in_array((int)$dados['status_registro'], [0, 1])) {
-            $erros['status_registro'] = 'Status de registro inválido. Deve ser 0 (inativo) ou 1 (ativo).';
-        }
-
-
         return $erros;
     }
 
-    public static function query(\PDO $conn, string $coluna = '*', string $join = '', string $filtro = '', array $valor = [], string $ordem = '', string $agrupamento = '', string $limit = ''): \PDOStatement
+    /**
+     * Constrói e executa uma consulta SQL, filtrando automaticamente por `status_registro = 1`.
+     */
+    public function query(\PDO $conn, string $coluna = '*', string $join = '', string $filtro = '', array $valor = [], string $ordem = '', string $agrupamento = '', string $limit = ''): \PDOStatement
     {
         $sql = "SELECT {$coluna} FROM " . self::$tabela;
         if (!empty($join)) $sql .= " {$join}";
-        if (!empty($filtro)) $sql .= " WHERE {$filtro}";
+
+        // Garante que todos os resultados sejam de registros ativos.
+        $sql .= " WHERE status_registro = 1";
+        if (!empty($filtro)) $sql .= " AND {$filtro}";
+
         if (!empty($agrupamento)) $sql .= " GROUP BY {$agrupamento}";
         if (!empty($ordem)) $sql .= " ORDER BY {$ordem}";
         if (!empty($limite)) $sql .= " LIMIT {$limite}";
@@ -117,103 +86,103 @@ class Fornecedor implements IEntidade
         return $stmt;
     }
 
-    public static function cadastrar(\PDO $conn, array $dados): bool
+    /**
+     * Cadastra um novo fornecedor.
+     * `data_criacao` e `status_registro` são gerenciados pelo banco de dados.
+     */
+    public function cadastrar(\PDO $conn, array $dados): bool
     {
-        $erros = self::validar($conn, $dados);
+        $erros = $this->validar($conn, $dados);
         if (!empty($erros)) {
             throw new \Exception(implode("\n", $erros), 400);
         }
 
         $sql = "INSERT INTO " . self::$tabela . " 
-                    (status_registro, nome, cnpj_cpf, email, telefone, endereco, criado_por, data_criacao) 
-                    VALUES (?, ?, ?, ?, ?, ?, 1, NOW())";
+                    (nome, cnpj_cpf, email, telefone, endereco, criado_por) 
+                    VALUES (:nome, :cnpj_cpf, :email, :telefone, :endereco, 1)";
         
         $stmt = $conn->prepare($sql);
         return $stmt->execute([
-            (int)($dados['status_registro'] ?? 1), // Padrão ativo
-            $dados['nome'],
-            empty($dados['cnpj_cpf']) ? null : $dados['cnpj_cpf'],
-            empty($dados['email']) ? null : $dados['email'],
-            empty($dados['telefone']) ? null : $dados['telefone'],
-            empty($dados['endereco']) ? null : $dados['endereco']
+            ':nome' => $dados['nome'],
+            ':cnpj_cpf' => empty($dados['cnpj_cpf']) ? null : $dados['cnpj_cpf'],
+            ':email' => empty($dados['email']) ? null : $dados['email'],
+            ':telefone' => empty($dados['telefone']) ? null : $dados['telefone'],
+            ':endereco' => empty($dados['endereco']) ? null : $dados['endereco']
         ]);
     }
 
-    public static function editar(\PDO $conn, ?int $id, array $dados): bool
+    /**
+     * Edita um fornecedor existente.
+     * `data_alteracao` é gerenciado automaticamente pelo banco de dados.
+     */
+    public function editar(\PDO $conn, ?int $id, array $dados): bool
     {
         if (empty($id)) {
             throw new \Exception("ID é obrigatório para edição.", 400);
         }
-
-        if (!self::buscarPorId($conn, $id)) {
-            throw new \Exception("ID #$id não encontrado.", 404);
+        if (!$this->buscarPorId($conn, $id)) {
+            throw new \Exception("O registro não foi encontrado.", 404);
         }
 
-        $erros = self::validar($conn, $dados, $id);
+        $erros = $this->validar($conn, $dados, $id);
         if (!empty($erros)) {
             throw new \Exception(implode("\n", $erros), 400);
         }
 
         $sql = "UPDATE " . self::$tabela . " SET 
-                    status_registro = ?, nome = ?, cnpj_cpf = ?, email = ?, telefone = ?, endereco = ?, 
-                    alterado_por = 1, data_alteracao = NOW() 
-                WHERE id = ?";
+                    nome = :nome, cnpj_cpf = :cnpj_cpf, email = :email, 
+                    telefone = :telefone, endereco = :endereco, alterado_por = 1
+                WHERE id = :id";
         
         $stmt = $conn->prepare($sql);
         return $stmt->execute([
-            (int)($dados['status_registro'] ?? 1),
-            $dados['nome'],
-            empty($dados['cnpj_cpf']) ? null : $dados['cnpj_cpf'],
-            empty($dados['email']) ? null : $dados['email'],
-            empty($dados['telefone']) ? null : $dados['telefone'],
-            empty($dados['endereco']) ? null : $dados['endereco'],
-            $id
+            ':nome' => $dados['nome'],
+            ':cnpj_cpf' => empty($dados['cnpj_cpf']) ? null : $dados['cnpj_cpf'],
+            ':email' => empty($dados['email']) ? null : $dados['email'],
+            ':telefone' => empty($dados['telefone']) ? null : $dados['telefone'],
+            ':endereco' => empty($dados['endereco']) ? null : $dados['endereco'],
+            ':id' => $id
         ]);
     }
 
-    public static function deletar(\PDO $conn, ?int $id): bool
+    /**
+     * Realiza a exclusão lógica de um fornecedor, definindo `status_registro` como 0.
+     * `data_alteracao` é gerenciado automaticamente pelo banco de dados.
+     */
+    public function deletar(\PDO $conn, ?int $id): bool
     {
         if (empty($id)) {
             throw new \Exception("ID é obrigatório para exclusão.", 400);
         }
-
-        if (!self::buscarPorId($conn, $id)) {
-            throw new \Exception("ID #$id não encontrado.", 404);
+        if (!$this->buscarPorId($conn, $id)) {
+            throw new \Exception("O registro não foi encontrado.", 404);
         }
 
-        // Exclusão lógica
-        $sql = "UPDATE " . self::$tabela . " SET status_registro = 0, alterado_por = 1, data_alteracao = NOW() WHERE id = ?";
+        $sql = "UPDATE " . self::$tabela . " SET status_registro = 0, alterado_por = 1 WHERE id = :id";
         $stmt = $conn->prepare($sql);
-        return $stmt->execute([$id]);
+        return $stmt->execute([':id' => $id]);
     }
 
     /**
-     * Lista todos os fornecedores ativos.
-     *
-     * @param \PDO $conn Conexão com o banco de dados.
-     * @return array Retorna um array de fornecedores.
+     * Lista todos os fornecedores ativos, ordenados por nome.
      */
-    public static function listar(\PDO $conn): array
+    public function listar(\PDO $conn, ?string $filtro = null, ?array $valor = null): array
     {
-        $cols = 'id, status_registro, nome, cnpj_cpf, email, telefone, endereco';
-        $stmt = self::query($conn, $cols, '', 'status_registro = 1', [], 'nome ASC');
+        $cols = 'id, nome, cnpj_cpf, email, telefone, endereco';
+        $stmt = $this->query($conn, coluna: $cols, filtro: $filtro, valor: $valor, ordem: 'nome ASC');
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
     /**
-     * Busca um fornecedor pelo ID.
-     *
-     * @param \PDO $conn Conexão com o banco de dados.
-     * @param int|null $id ID do fornecedor.
-     * @return array|null Retorna os dados do fornecedor ou null se não encontrado/inválido.
+     * Busca um fornecedor ativo pelo seu ID.
      */
-    public static function buscarPorId(\PDO $conn, ?int $id): ?array
+    public function buscarPorId(\PDO $conn, ?int $id): ?array
     {
         if (empty($id)) {
             throw new \Exception("ID é obrigatório para busca.", 400);
         }
-        $cols = 'id, status_registro, nome, cnpj_cpf, email, telefone, endereco';
-        $stmt = self::query($conn, $cols, '', 'id = ? AND status_registro = 1', [$id]);
+        $cols = 'id, nome, cnpj_cpf, email, telefone, endereco';
+        $stmt = $this->query($conn, coluna: $cols, filtro: 'id = :id', valor: [':id' => $id]);
         $resultado = $stmt->fetch(\PDO::FETCH_ASSOC);
         return $resultado ?: null;
     }

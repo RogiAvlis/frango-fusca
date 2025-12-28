@@ -15,7 +15,8 @@ try {
     
     $conn = Conexao::obterConexao();
     
-    if (AmbienteVenda::deletar($conn, $id)) {
+    $ambienteVenda = new AmbienteVenda();
+    if ($ambienteVenda->deletar($conn, $id)) {
         echo json_encode(['status' => 'success', 'message' => 'Ambiente de venda deletado com sucesso!']);
     } else {
         http_response_code(500);

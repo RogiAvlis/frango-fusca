@@ -12,7 +12,8 @@ verificarMetodo('GET');
 
 try {
     $conn = Conexao::obterConexao();
-    $fornecedores = Fornecedor::listar($conn);
+    $fornecedor = new Fornecedor();
+    $fornecedores = $fornecedor->listar($conn);
     
     // Formata os dados para o select: id, texto (nome)
     $resultado = array_map(function($fornecedor) {

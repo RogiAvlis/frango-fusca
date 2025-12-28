@@ -24,7 +24,8 @@ try {
 
     $conn = Conexao::obterConexao();
     
-    if (Venda::editar($conn, $id, $dados)) {
+    $venda = new Venda();
+    if ($venda->editar($conn, $id, $dados)) {
         echo json_encode(['status' => 'success', 'message' => 'Venda atualizada com sucesso!']);
     } else {
         echo json_encode(['status' => 'info', 'message' => 'Nenhuma alteração foi feita (dados iguais).']);

@@ -20,7 +20,8 @@ try {
 
     $conn = Conexao::obterConexao();
     
-    if (Usuario::cadastrar($conn, $dados)) {
+    $usuario = new Usuario();
+    if ($usuario->cadastrar($conn, $dados)) {
         echo json_encode(['status' => 'success', 'message' => 'Usuário cadastrado com sucesso!']);
     } else {
         http_response_code(500);

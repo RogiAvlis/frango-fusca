@@ -15,7 +15,8 @@ try {
 
     $conn = Conexao::obterConexao();
     
-    $unidade = UnidadeMedida::buscarPorId($conn, $id);
+    $unidadeMedida = new UnidadeMedida();
+    $unidade = $unidadeMedida->buscarPorId($conn, $id);
     
     if ($unidade) {
         echo json_encode($unidade);

@@ -21,7 +21,8 @@ try {
 
     $conn = Conexao::obterConexao();
     
-    if (Cliente::editar($conn, $id, $dados)) {
+    $cliente = new Cliente();
+    if ($cliente->editar($conn, $id, $dados)) {
         echo json_encode(['status' => 'success', 'message' => 'Cliente atualizado com sucesso!']);
     } else {
         echo json_encode(['status' => 'info', 'message' => 'Nenhuma alteração foi feita (dados iguais).']);

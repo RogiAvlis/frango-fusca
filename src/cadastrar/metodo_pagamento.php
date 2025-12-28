@@ -20,7 +20,8 @@ try {
 
     $conn = Conexao::obterConexao();
     
-    if (MetodoPagamento::cadastrar($conn, $dados)) {
+    $metodoPagamento = new MetodoPagamento();
+    if ($metodoPagamento->cadastrar($conn, $dados)) {
         echo json_encode(['status' => 'success', 'message' => 'Método de pagamento cadastrado com sucesso!']);
     } else {
         http_response_code(500);

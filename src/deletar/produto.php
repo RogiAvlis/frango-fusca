@@ -15,7 +15,8 @@ try {
     
     $conn = Conexao::obterConexao();
     
-    if (Produto::deletar($conn, $id)) {
+    $produto = new Produto();
+    if ($produto->deletar($conn, $id)) {
         echo json_encode(['status' => 'success', 'message' => 'Produto deletado com sucesso!']);
     } else {
         http_response_code(500);

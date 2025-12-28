@@ -26,7 +26,8 @@ try {
 
     $conn = Conexao::obterConexao();
     
-    if (Produto::editar($conn, $id, $dados)) {
+    $produto = new Produto();
+    if ($produto->editar($conn, $id, $dados)) {
         echo json_encode(['status' => 'success', 'message' => 'Produto atualizado com sucesso!']);
     } else {
         echo json_encode(['status' => 'info', 'message' => 'Nenhuma alteração foi feita (dados iguais).']);

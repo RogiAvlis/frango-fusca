@@ -15,7 +15,8 @@ try {
     
     $conn = Conexao::obterConexao();
     
-    if (Receita::deletar($conn, $id)) {
+    $receita = new Receita();
+    if ($receita->deletar($conn, $id)) {
         echo json_encode(['status' => 'success', 'message' => 'Receita deletada com sucesso!']);
     } else {
         http_response_code(500);

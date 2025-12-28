@@ -12,7 +12,8 @@ verificarMetodo('GET');
 
 try {
     $conn = Conexao::obterConexao();
-    $fornecedores = Fornecedor::listar($conn);
+    $fornecedor = new Fornecedor();
+    $fornecedores = $fornecedor->listar($conn);
     echo json_encode(['data' => $fornecedores]);
 } catch (\Exception $e) {
     http_response_code(500);

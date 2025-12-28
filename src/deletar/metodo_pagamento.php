@@ -15,7 +15,8 @@ try {
     
     $conn = Conexao::obterConexao();
     
-    if (MetodoPagamento::deletar($conn, $id)) {
+    $metodoPagamento = new MetodoPagamento();
+    if ($metodoPagamento->deletar($conn, $id)) {
         echo json_encode(['status' => 'success', 'message' => 'Método de pagamento deletado com sucesso!']);
     } else {
         http_response_code(500);

@@ -14,7 +14,8 @@ try {
     $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 
     $conn = Conexao::obterConexao();
-    $ambiente = AmbienteVenda::buscarPorId($conn, $id);
+    $ambienteVenda = new AmbienteVenda();
+    $ambiente = $ambienteVenda->buscarPorId($conn, $id);
     
     if ($ambiente) {
         echo json_encode($ambiente);

@@ -22,7 +22,8 @@ try {
 
     $conn = Conexao::obterConexao();
     
-    if (Usuario::editar($conn, $id, $dados)) {
+    $usuario = new Usuario();
+    if ($usuario->editar($conn, $id, $dados)) {
         echo json_encode(['status' => 'success', 'message' => 'Usuário atualizado com sucesso!']);
     } else {
         echo json_encode(['status' => 'info', 'message' => 'Nenhuma alteração foi feita (dados iguais).']);

@@ -12,7 +12,8 @@ verificarMetodo('GET');
 
 try {
     $conn = Conexao::obterConexao();
-    $unidades = UnidadeMedida::listar($conn);
+    $unidadeMedida = new UnidadeMedida();
+    $unidades = $unidadeMedida->listar($conn);
     
     // Formata os dados para o select: id, texto (sigla - nome)
     $resultado = array_map(function($unidade) {

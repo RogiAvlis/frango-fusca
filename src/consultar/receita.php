@@ -12,7 +12,8 @@ verificarMetodo('GET');
 
 try {
     $conn = Conexao::obterConexao();
-    $receitas = Receita::listar($conn);
+    $receita = new Receita();
+    $receitas = $receita->listar($conn);
     echo json_encode(['data' => $receitas]);
 } catch (\Exception $e) {
     http_response_code(500);

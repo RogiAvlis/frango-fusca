@@ -21,7 +21,8 @@ try {
 
     $conn = Conexao::obterConexao();
     
-    if (MaquinaVenda::editar($conn, $id, $dados)) {
+    $maquinaVenda = new MaquinaVenda();
+    if ($maquinaVenda->editar($conn, $id, $dados)) {
         echo json_encode(['status' => 'success', 'message' => 'Máquina de venda atualizada com sucesso!']);
     } else {
         echo json_encode(['status' => 'info', 'message' => 'Nenhuma alteração foi feita (dados iguais).']);

@@ -21,7 +21,8 @@ try {
 
     $conn = Conexao::obterConexao();
     
-    if (Receita::cadastrar($conn, $dados)) {
+    $receita = new Receita();
+    if ($receita->cadastrar($conn, $dados)) {
         echo json_encode(['status' => 'success', 'message' => 'Receita cadastrada com sucesso!']);
     } else {
         http_response_code(500);

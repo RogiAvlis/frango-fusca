@@ -14,7 +14,8 @@ try {
     $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 
     $conn = Conexao::obterConexao();
-    $venda = Venda::buscarPorId($conn, $id);
+    $venda = new Venda();
+    $venda = $venda->buscarPorId($conn, $id);
     
     if ($venda) {
         echo json_encode($venda);

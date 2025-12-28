@@ -21,7 +21,8 @@ try {
 
     $conn = Conexao::obterConexao();
     
-    if (AmbienteVenda::editar($conn, $id, $dados)) {
+    $ambienteVenda = new AmbienteVenda();
+    if ($ambienteVenda->editar($conn, $id, $dados)) {
         echo json_encode(['status' => 'success', 'message' => 'Ambiente de venda atualizado com sucesso!']);
     } else {
         echo json_encode(['status' => 'info', 'message' => 'Nenhuma alteração foi feita (dados iguais).']);

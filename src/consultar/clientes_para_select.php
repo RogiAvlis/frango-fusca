@@ -12,7 +12,8 @@ verificarMetodo('GET');
 
 try {
     $conn = Conexao::obterConexao();
-    $clientes = Cliente::listar($conn);
+    $cliente = new Cliente();
+    $clientes = $cliente->listar($conn);
     
     // Formata os dados para o select: id, texto (nome)
     $resultado = array_map(function($cliente) {

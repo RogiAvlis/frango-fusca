@@ -12,7 +12,8 @@ verificarMetodo('GET');
 
 try {
     $conn = Conexao::obterConexao();
-    $metodos = MetodoPagamento::listar($conn);
+    $metodoPagamento = new MetodoPagamento();
+    $metodos = $metodoPagamento->listar($conn);
     
     // Formata os dados para a simulação: id, texto (nome), e a taxa (que é 0.0 por padrão)
     $resultado = array_map(function($metodo) {

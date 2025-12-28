@@ -20,7 +20,8 @@ try {
 
     $conn = Conexao::obterConexao();
     
-    if (UnidadeMedida::cadastrar($conn, $dados)) {
+    $unidadeMedida = new UnidadeMedida();
+    if ($unidadeMedida->cadastrar($conn, $dados)) {
         echo json_encode(['status' => 'success', 'message' => 'Unidade de medida cadastrada com sucesso!']);
     } else {
         // Esta condição é menos provável de acontecer se a exceção for o principal meio de falha

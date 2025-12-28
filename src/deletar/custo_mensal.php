@@ -15,7 +15,8 @@ try {
     
     $conn = Conexao::obterConexao();
     
-    if (CustoMensal::deletar($conn, $id)) {
+    $custoMensal = new CustoMensal();
+    if ($custoMensal->deletar($conn, $id)) {
         echo json_encode(['status' => 'success', 'message' => 'Custo mensal deletado com sucesso!']);
     } else {
         http_response_code(500);

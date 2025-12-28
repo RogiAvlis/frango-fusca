@@ -24,7 +24,8 @@ try {
 
     $conn = Conexao::obterConexao();
     
-    if (CustoMensal::cadastrar($conn, $dados)) {
+    $custoMensal = new CustoMensal();
+    if ($custoMensal->cadastrar($conn, $dados)) {
         echo json_encode(['status' => 'success', 'message' => 'Custo mensal cadastrado com sucesso!']);
     } else {
         http_response_code(500);

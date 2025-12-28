@@ -15,7 +15,8 @@ try {
     
     $conn = Conexao::obterConexao();
     
-    if (Fornecedor::deletar($conn, $id)) {
+    $fornecedor = new Fornecedor();
+    if ($fornecedor->deletar($conn, $id)) {
         echo json_encode(['status' => 'success', 'message' => 'Fornecedor deletado com sucesso!']);
     } else {
         http_response_code(500);

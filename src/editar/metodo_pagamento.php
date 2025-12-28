@@ -22,7 +22,8 @@ try {
 
     $conn = Conexao::obterConexao();
     
-    if (MetodoPagamento::editar($conn, $id, $dados)) {
+    $metodoPagamento = new MetodoPagamento();
+    if ($metodoPagamento->editar($conn, $id, $dados)) {
         echo json_encode(['status' => 'success', 'message' => 'Método de pagamento atualizado com sucesso!']);
     } else {
         echo json_encode(['status' => 'info', 'message' => 'Nenhuma alteração foi feita (dados iguais).']);
