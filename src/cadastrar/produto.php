@@ -10,6 +10,8 @@ use function FrangoFusca\Helpers\verificarMetodo;
 
 verificarMetodo('POST');
 
+require_once __DIR__ . '/../../src/core/verificar_sessao.php';
+
 try {
     $dados = [
         'status_registro' => filter_input(INPUT_POST, 'status_registro', FILTER_VALIDATE_INT),
@@ -21,11 +23,12 @@ try {
         'unidade_medida_id' => filter_input(INPUT_POST, 'unidade_medida_id', FILTER_VALIDATE_INT),
         'fornecedor_id' => filter_input(INPUT_POST, 'fornecedor_id', FILTER_VALIDATE_INT)
     ];
+    $idUsuario = $_SESSION['user_id'];
 
     $conn = Conexao::obterConexao();
     
     $produto = new Produto();
-    if ($produto->cadastrar($conn, $dados)) {
+    if ($produto->cadastrar($conn, $dados, $idUsuario)) {
         echo json_encode(['status' => 'success', 'message' => 'Produto cadastrado com sucesso!']);
     } else {
         http_response_code(500);

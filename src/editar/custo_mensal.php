@@ -10,8 +10,10 @@ use function FrangoFusca\Helpers\verificarMetodo;
 
 verificarMetodo('POST');
 
+require_once __DIR__ . '/../../src/core/verificar_sessao.php';
+
 try {
-    $id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
+    $idRegistro = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
     
     $dados = [
         'descricao' => trim(filter_input(INPUT_POST, 'descricao', FILTER_DEFAULT)),
@@ -23,11 +25,12 @@ try {
         'tipo_custo' => filter_input(INPUT_POST, 'tipo_custo', FILTER_DEFAULT),
         'status_pagamento' => filter_input(INPUT_POST, 'status_pagamento', FILTER_VALIDATE_INT)
     ];
+    $idUsuario = $_SESSION['user_id'];
 
     $conn = Conexao::obterConexao();
     
     $custoMensal = new CustoMensal();
-    if ($custoMensal->editar($conn, $id, $dados)) {
+    if ($custoMensal->editar($conn, $idRegistro, $dados, $idUsuario)) {
         echo json_encode(['status' => 'success', 'message' => 'Custo mensal atualizado com sucesso!']);
     } else {
         echo json_encode(['status' => 'info', 'message' => 'Nenhuma alteração foi feita (dados iguais).']);

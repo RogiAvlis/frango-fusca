@@ -79,18 +79,19 @@ class Usuario implements IEntidade
      * `data_criacao` e `status_registro` são gerenciados pelo banco de dados.
      * A senha é criptografada com hash.
      */
-    public function cadastrar(\PDO $conn, array $dados): bool
+    public function cadastrar(\PDO $conn, array $dados, int $idUsuario): bool
     {
         $erros = $this->validar($conn, $dados, null, true);
         if (!empty($erros)) throw new \Exception(implode("\n", $erros), 400);
 
-        $sql = "INSERT INTO " . self::$tabela . " (nome, email, senha, criado_por) VALUES (:nome, :email, :senha, 1)";
+        $sql = "INSERT INTO " . self::$tabela . " (nome, email, senha, criado_por) VALUES (:nome, :email, :senha, :criado_por)";
         
         $stmt = $conn->prepare($sql);
         return $stmt->execute([
             ':nome' => $dados['nome'],
             ':email' => $dados['email'],
-            ':senha' => password_hash($dados['senha'], PASSWORD_DEFAULT)
+            ':senha' => password_hash($dados['senha'], PASSWORD_DEFAULT),
+            ':criado_por' => $idUsuario
         ]);
     }
 
@@ -99,17 +100,17 @@ class Usuario implements IEntidade
      * `data_alteracao` é gerenciado pelo banco de dados.
      * A senha só é alterada se um novo valor for fornecido.
      */
-    public function editar(\PDO $conn, ?int $id, array $dados): bool
+    public function editar(\PDO $conn, ?int $idRegistro, array $dados, int $idUsuario): bool
     {
-        if (empty($id)) throw new \Exception("ID é obrigatório para edição.", 400);
-        if (!$this->buscarPorId($conn, $id)) throw new \Exception("O registro não foi encontrado.", 404);
+        if (empty($idRegistro)) throw new \Exception("ID é obrigatório para edição.", 400);
+        if (!$this->buscarPorId($conn, $idRegistro)) throw new \Exception("O registro não foi encontrado.", 404);
 
         $isCadastro = false;
-        $erros = $this->validar($conn, $dados, $id, $isCadastro);
+        $erros = $this->validar($conn, $dados, $idRegistro, $isCadastro);
         if (!empty($erros)) throw new \Exception(implode("\n", $erros), 400);
 
-        $setClauses = ['nome = :nome', 'email = :email', 'alterado_por = 1'];
-        $valores = [':nome' => $dados['nome'], ':email' => $dados['email']];
+        $setClauses = ['nome = :nome', 'email = :email', 'alterado_por = :alterado_por'];
+        $valores = [':nome' => $dados['nome'], ':email' => $dados['email'], ':alterado_por' => $idUsuario];
 
         if (!empty($dados['senha'])) {
             $setClauses[] = 'senha = :senha';
@@ -117,7 +118,7 @@ class Usuario implements IEntidade
         }
 
         $sql = "UPDATE " . self::$tabela . " SET " . implode(', ', $setClauses) . " WHERE id = :id";
-        $valores[':id'] = $id;
+        $valores[':id'] = $idRegistro;
 
         $stmt = $conn->prepare($sql);
         return $stmt->execute($valores);
@@ -127,14 +128,17 @@ class Usuario implements IEntidade
      * Realiza a exclusão lógica de um usuário.
      * `data_alteracao` é gerenciado pelo banco de dados.
      */
-    public function deletar(\PDO $conn, ?int $id): bool
+    public function deletar(\PDO $conn, ?int $idRegistro, int $idUsuario): bool
     {
-        if (empty($id)) throw new \Exception("ID é obrigatório para exclusão.", 400);
-        if (!$this->buscarPorId($conn, $id)) throw new \Exception("O registro não foi encontrado.", 404);
+        if (empty($idRegistro)) throw new \Exception("ID é obrigatório para exclusão.", 400);
+        if (!$this->buscarPorId($conn, $idRegistro)) throw new \Exception("O registro não foi encontrado.", 404);
 
-        $sql = "UPDATE " . self::$tabela . " SET status_registro = 0, alterado_por = 1 WHERE id = :id";
+        $sql = "UPDATE " . self::$tabela . " SET status_registro = 0, alterado_por = :alterado_por WHERE id = :id";
         $stmt = $conn->prepare($sql);
-        return $stmt->execute([':id' => $id]);
+        return $stmt->execute([
+            ':id' => $idRegistro,
+            ':alterado_por' => $idUsuario
+        ]);
     }
 
     /**

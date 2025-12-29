@@ -10,18 +10,21 @@ use function FrangoFusca\Helpers\verificarMetodo;
 
 verificarMetodo('POST');
 
+require_once __DIR__ . '/../../src/core/verificar_sessao.php';
+
 try {
-    $id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
+    $idRegistro = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
     
     $dados = [
         'sigla' => trim(filter_input(INPUT_POST, 'sigla', FILTER_DEFAULT)),
         'nome' => trim(filter_input(INPUT_POST, 'nome', FILTER_DEFAULT))
     ];
+    $idUsuario = $_SESSION['user_id'];
 
     $conn = Conexao::obterConexao();
     
     $unidadeMedida = new UnidadeMedida();
-    if ($unidadeMedida->editar($conn, $id, $dados)) {
+    if ($unidadeMedida->editar($conn, $idRegistro, $dados, $idUsuario)) {
         echo json_encode(['status' => 'success', 'message' => 'Unidade de medida atualizada com sucesso!']);
     } else {
         echo json_encode(['status' => 'info', 'message' => 'Nenhuma alteração foi feita (dados iguais).']);

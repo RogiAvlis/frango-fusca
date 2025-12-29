@@ -86,18 +86,19 @@ class Cliente implements IEntidade
      * @return bool Retorna true em caso de sucesso.
      * @throws \Exception Se houver erros de validação.
      */
-    public function cadastrar(\PDO $conn, array $dados): bool
+    public function cadastrar(\PDO $conn, array $dados, int $idUsuario): bool
     {
         $erros = $this->validar($conn, $dados);
         if (!empty($erros)) {
             throw new \Exception(implode("\n", $erros), 400);
         }
 
-        $sql = "INSERT INTO " . self::$tabela . " (nome, telefone, criado_por) VALUES (:nome, :telefone, 1)";
+        $sql = "INSERT INTO " . self::$tabela . " (nome, telefone, criado_por) VALUES (:nome, :telefone, :criado_por)";
         $stmt = $conn->prepare($sql);
         return $stmt->execute([
             ':nome' => $dados['nome'],
-            ':telefone' => empty($dados['telefone']) ? null : $dados['telefone']
+            ':telefone' => empty($dados['telefone']) ? null : $dados['telefone'],
+            ':criado_por' => $idUsuario
         ]);
     }
 
@@ -111,26 +112,27 @@ class Cliente implements IEntidade
      * @return bool Retorna true em caso de sucesso.
      * @throws \Exception Se o ID não for fornecido, o registro não for encontrado ou houver erros de validação.
      */
-    public function editar(\PDO $conn, ?int $id, array $dados): bool
+    public function editar(\PDO $conn, ?int $idRegistro, array $dados, int $idUsuario): bool
     {
-        if (empty($id)) {
+        if (empty($idRegistro)) {
             throw new \Exception("ID é obrigatório para edição.", 400);
         }
-        if (!$this->buscarPorId($conn, $id)) {
+        if (!$this->buscarPorId($conn, $idRegistro)) {
             throw new \Exception("O registro não foi encontrado.", 404);
         }
 
-        $erros = $this->validar($conn, $dados, $id);
+        $erros = $this->validar($conn, $dados, $idRegistro);
         if (!empty($erros)) {
             throw new \Exception(implode("\n", $erros), 400);
         }
 
-        $sql = "UPDATE " . self::$tabela . " SET nome = :nome, telefone = :telefone, alterado_por = 1 WHERE id = :id";
+        $sql = "UPDATE " . self::$tabela . " SET nome = :nome, telefone = :telefone, alterado_por = :alterado_por WHERE id = :id";
         $stmt = $conn->prepare($sql);
         return $stmt->execute([
             ':nome' => $dados['nome'],
             ':telefone' => empty($dados['telefone']) ? null : $dados['telefone'],
-            ':id' => $id
+            ':alterado_por' => $idUsuario,
+            ':id' => $idRegistro
         ]);
     }
 
@@ -142,19 +144,22 @@ class Cliente implements IEntidade
      * @return bool Retorna true em caso de sucesso.
      * @throws \Exception Se o ID não for fornecido ou o registro não for encontrado.
      */
-    public function deletar(\PDO $conn, ?int $id): bool
+    public function deletar(\PDO $conn, ?int $idRegistro, int $idUsuario): bool
     {
-        if (empty($id)) {
+        if (empty($idRegistro)) {
             throw new \Exception("ID é obrigatório para exclusão.", 400);
         }
-        if (!$this->buscarPorId($conn, $id)) {
+        if (!$this->buscarPorId($conn, $idRegistro)) {
             throw new \Exception("O registro não foi encontrado.", 404);
         }
 
         // Realiza a exclusão lógica, mantendo o registro no banco.
-        $sql = "UPDATE " . self::$tabela . " SET status_registro = 0, alterado_por = 1 WHERE id = :id";
+        $sql = "UPDATE " . self::$tabela . " SET status_registro = 0, alterado_por = :alterado_por WHERE id = :id";
         $stmt = $conn->prepare($sql);
-        return $stmt->execute([':id' => $id]);
+        return $stmt->execute([
+            ':id' => $idRegistro,
+            ':alterado_por' => $idUsuario
+        ]);
     }
 
     /**

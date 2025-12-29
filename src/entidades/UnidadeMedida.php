@@ -65,45 +65,57 @@ class UnidadeMedida implements IEntidade
      * Cadastra uma nova unidade de medida.
      * `data_criacao` e `status_registro` são gerenciados pelo banco de dados.
      */
-    public function cadastrar(\PDO $conn, array $dados): bool
+    public function cadastrar(\PDO $conn, array $dados, int $idUsuario): bool
     {
         $erros = $this->validar($conn, $dados);
         if (!empty($erros)) throw new \Exception(implode("\n", $erros), 400);
 
-        $sql = "INSERT INTO " . self::$tabela . " (sigla, nome, criado_por) VALUES (:sigla, :nome, 1)";
+        $sql = "INSERT INTO " . self::$tabela . " (sigla, nome, criado_por) VALUES (:sigla, :nome, :criado_por)";
         $stmt = $conn->prepare($sql);
-        return $stmt->execute([':sigla' => $dados['sigla'], ':nome' => $dados['nome']]);
+        return $stmt->execute([
+            ':sigla' => $dados['sigla'], 
+            ':nome' => $dados['nome'],
+            ':criado_por' => $idUsuario
+        ]);
     }
 
     /**
      * Edita uma unidade de medida existente.
      * `data_alteracao` é gerenciado automaticamente pelo banco de dados.
      */
-    public function editar(\PDO $conn, ?int $id, array $dados): bool
+    public function editar(\PDO $conn, ?int $idRegistro, array $dados, int $idUsuario): bool
     {
-        if (empty($id)) throw new \Exception("ID é obrigatório para edição.", 400);
-        if (!$this->buscarPorId($conn, $id)) throw new \Exception("O registro não foi encontrado.", 404);
+        if (empty($idRegistro)) throw new \Exception("ID é obrigatório para edição.", 400);
+        if (!$this->buscarPorId($conn, $idRegistro)) throw new \Exception("O registro não foi encontrado.", 404);
 
-        $erros = $this->validar($conn, $dados, $id);
+        $erros = $this->validar($conn, $dados, $idRegistro);
         if (!empty($erros)) throw new \Exception(implode("\n", $erros), 400);
 
-        $sql = "UPDATE " . self::$tabela . " SET sigla = :sigla, nome = :nome, alterado_por = 1 WHERE id = :id";
+        $sql = "UPDATE " . self::$tabela . " SET sigla = :sigla, nome = :nome, alterado_por = :alterado_por WHERE id = :id";
         $stmt = $conn->prepare($sql);
-        return $stmt->execute([':sigla' => $dados['sigla'], ':nome' => $dados['nome'], ':id' => $id]);
+        return $stmt->execute([
+            ':sigla' => $dados['sigla'], 
+            ':nome' => $dados['nome'], 
+            ':alterado_por' => $idUsuario,
+            ':id' => $idRegistro
+        ]);
     }
 
     /**
      * Realiza a exclusão lógica de uma unidade de medida.
      * `data_alteracao` é gerenciado automaticamente pelo banco de dados.
      */
-    public function deletar(\PDO $conn, ?int $id): bool
+    public function deletar(\PDO $conn, ?int $idRegistro, int $idUsuario): bool
     {
-        if (empty($id)) throw new \Exception("ID é obrigatório para exclusão.", 400);
-        if (!$this->buscarPorId($conn, $id)) throw new \Exception("O registro não foi encontrado.", 404);
+        if (empty($idRegistro)) throw new \Exception("ID é obrigatório para exclusão.", 400);
+        if (!$this->buscarPorId($conn, $idRegistro)) throw new \Exception("O registro não foi encontrado.", 404);
 
-        $sql = "UPDATE " . self::$tabela . " SET status_registro = 0, alterado_por = 1 WHERE id = :id";
+        $sql = "UPDATE " . self::$tabela . " SET status_registro = 0, alterado_por = :alterado_por WHERE id = :id";
         $stmt = $conn->prepare($sql);
-        return $stmt->execute([':id' => $id]);
+        return $stmt->execute([
+            ':id' => $idRegistro,
+            ':alterado_por' => $idUsuario
+        ]);
     }
 
     /**

@@ -10,17 +10,20 @@ use function FrangoFusca\Helpers\verificarMetodo;
 
 verificarMetodo('POST');
 
+require_once __DIR__ . '/../../src/core/verificar_sessao.php';
+
 try {
     $dados = [
         'nome' => trim(filter_input(INPUT_POST, 'nome', FILTER_DEFAULT)),
         'descricao' => trim(filter_input(INPUT_POST, 'descricao', FILTER_DEFAULT)),
         'taxa' => filter_input(INPUT_POST, 'taxa', FILTER_VALIDATE_FLOAT)
     ];
+    $idUsuario = $_SESSION['user_id'];
 
     $conn = Conexao::obterConexao();
     
     $ambienteVenda = new AmbienteVenda();
-    if ($ambienteVenda->cadastrar($conn, $dados)) {
+    if ($ambienteVenda->cadastrar($conn, $dados, $idUsuario)) {
         echo json_encode(['status' => 'success', 'message' => 'Ambiente de venda cadastrado com sucesso!']);
     } else {
         http_response_code(500);

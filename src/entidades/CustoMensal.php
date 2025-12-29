@@ -86,7 +86,7 @@ class CustoMensal implements IEntidade
      * Cadastra um novo custo mensal.
      * `data_criacao` e `status_registro` são gerenciados pelo banco de dados.
      */
-    public function cadastrar(\PDO $conn, array $dados): bool
+    public function cadastrar(\PDO $conn, array $dados, int $idUsuario): bool
     {
         $erros = $this->validar($conn, $dados);
         if (!empty($erros)) {
@@ -95,7 +95,7 @@ class CustoMensal implements IEntidade
 
         $sql = "INSERT INTO " . self::$tabela . " 
                     (status_pagamento, tipo_custo, quantidade_parcela, descricao, valor, data_pagamento, mes, ano, criado_por) 
-                    VALUES (:status_pagamento, :tipo_custo, :quantidade_parcela, :descricao, :valor, :data_pagamento, :mes, :ano, 1)";
+                    VALUES (:status_pagamento, :tipo_custo, :quantidade_parcela, :descricao, :valor, :data_pagamento, :mes, :ano, :criado_por)";
         
         $stmt = $conn->prepare($sql);
         return $stmt->execute([
@@ -106,7 +106,8 @@ class CustoMensal implements IEntidade
             ':valor' => (float)$dados['valor'],
             ':data_pagamento' => $dados['data_pagamento'],
             ':mes' => (int)$dados['mes'],
-            ':ano' => (int)$dados['ano']
+            ':ano' => (int)$dados['ano'],
+            ':criado_por' => $idUsuario
         ]);
     }
 
@@ -114,16 +115,16 @@ class CustoMensal implements IEntidade
      * Edita um custo mensal existente.
      * `data_alteracao` é gerenciado automaticamente pelo banco de dados.
      */
-    public function editar(\PDO $conn, ?int $id, array $dados): bool
+    public function editar(\PDO $conn, ?int $idRegistro, array $dados, int $idUsuario): bool
     {
-        if (empty($id)) {
+        if (empty($idRegistro)) {
             throw new \Exception("ID é obrigatório para edição.", 400);
         }
-        if (!$this->buscarPorId($conn, $id)) {
+        if (!$this->buscarPorId($conn, $idRegistro)) {
             throw new \Exception("O registro não foi encontrado.", 404);
         }
 
-        $erros = $this->validar($conn, $dados, $id);
+        $erros = $this->validar($conn, $dados, $idRegistro);
         if (!empty($erros)) {
             throw new \Exception(implode("\n", $erros), 400);
         }
@@ -131,7 +132,7 @@ class CustoMensal implements IEntidade
         $sql = "UPDATE " . self::$tabela . " SET 
                     status_pagamento = :status_pagamento, tipo_custo = :tipo_custo, quantidade_parcela = :quantidade_parcela, 
                     descricao = :descricao, valor = :valor, data_pagamento = :data_pagamento, mes = :mes, ano = :ano,
-                    alterado_por = 1
+                    alterado_por = :alterado_por
                 WHERE id = :id";
         
         $stmt = $conn->prepare($sql);
@@ -144,7 +145,8 @@ class CustoMensal implements IEntidade
             ':data_pagamento' => $dados['data_pagamento'],
             ':mes' => (int)$dados['mes'],
             ':ano' => (int)$dados['ano'],
-            ':id' => $id
+            ':alterado_por' => $idUsuario,
+            ':id' => $idRegistro
         ]);
     }
 
@@ -152,18 +154,21 @@ class CustoMensal implements IEntidade
      * Realiza a exclusão lógica de um custo mensal, definindo `status_registro` como 0.
      * `data_alteracao` é gerenciado automaticamente pelo banco de dados.
      */
-    public function deletar(\PDO $conn, ?int $id): bool
+    public function deletar(\PDO $conn, ?int $idRegistro, int $idUsuario): bool
     {
-        if (empty($id)) {
+        if (empty($idRegistro)) {
             throw new \Exception("ID é obrigatório para exclusão.", 400);
         }
-        if (!$this->buscarPorId($conn, $id)) {
+        if (!$this->buscarPorId($conn, $idRegistro)) {
             throw new \Exception("O registro não foi encontrado.", 404);
         }
 
-        $sql = "UPDATE " . self::$tabela . " SET status_registro = 0, alterado_por = 1 WHERE id = :id";
+        $sql = "UPDATE " . self::$tabela . " SET status_registro = 0, alterado_por = :alterado_por WHERE id = :id";
         $stmt = $conn->prepare($sql);
-        return $stmt->execute([':id' => $id]);
+        return $stmt->execute([
+            ':id' => $idRegistro,
+            ':alterado_por' => $idUsuario
+        ]);
     }
 
     /**

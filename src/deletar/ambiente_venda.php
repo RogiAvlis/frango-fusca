@@ -10,13 +10,16 @@ use function FrangoFusca\Helpers\verificarMetodo;
 
 verificarMetodo('POST');
 
+require_once __DIR__ . '/../../src/core/verificar_sessao.php';
+
 try {
-    $id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
+    $idRegistro = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
+    $idUsuario = $_SESSION['user_id'];
     
     $conn = Conexao::obterConexao();
     
     $ambienteVenda = new AmbienteVenda();
-    if ($ambienteVenda->deletar($conn, $id)) {
+    if ($ambienteVenda->deletar($conn, $idRegistro, $idUsuario)) {
         echo json_encode(['status' => 'success', 'message' => 'Ambiente de venda deletado com sucesso!']);
     } else {
         http_response_code(500);

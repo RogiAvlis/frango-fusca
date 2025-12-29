@@ -10,8 +10,10 @@ use function FrangoFusca\Helpers\verificarMetodo;
 
 verificarMetodo('POST');
 
+require_once __DIR__ . '/../../src/core/verificar_sessao.php';
+
 try {
-    $id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
+    $idRegistro = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
     
     $dados = [
         'status_registro' => filter_input(INPUT_POST, 'status_registro', FILTER_VALIDATE_INT),
@@ -23,11 +25,12 @@ try {
         'unidade_medida_id' => filter_input(INPUT_POST, 'unidade_medida_id', FILTER_VALIDATE_INT),
         'fornecedor_id' => filter_input(INPUT_POST, 'fornecedor_id', FILTER_VALIDATE_INT)
     ];
+    $idUsuario = $_SESSION['user_id'];
 
     $conn = Conexao::obterConexao();
     
     $produto = new Produto();
-    if ($produto->editar($conn, $id, $dados)) {
+    if ($produto->editar($conn, $idRegistro, $dados, $idUsuario)) {
         echo json_encode(['status' => 'success', 'message' => 'Produto atualizado com sucesso!']);
     } else {
         echo json_encode(['status' => 'info', 'message' => 'Nenhuma alteração foi feita (dados iguais).']);

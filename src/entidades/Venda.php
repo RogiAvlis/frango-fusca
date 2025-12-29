@@ -78,14 +78,14 @@ class Venda implements IEntidade
      *
      * @return int O ID da venda inserida.
      */
-    public function cadastrar(\PDO $conn, array $dados): int
+    public function cadastrar(\PDO $conn, array $dados, int $idUsuario): int
     {
         $erros = $this->validar($conn, $dados);
         if (!empty($erros)) throw new \Exception(implode("\n", $erros), 400);
 
         $sql = "INSERT INTO " . self::$tabela . " 
                     (cliente_id, vendedor_id, data_venda, valor_total, metodo_pagamento_id, ambiente_venda_id, criado_por) 
-                    VALUES (:cliente_id, :vendedor_id, :data_venda, :valor_total, :metodo_pagamento_id, :ambiente_venda_id, 1)";
+                    VALUES (:cliente_id, :vendedor_id, :data_venda, :valor_total, :metodo_pagamento_id, :ambiente_venda_id, :criado_por)";
         
         $stmt = $conn->prepare($sql);
         $stmt->execute([
@@ -94,7 +94,8 @@ class Venda implements IEntidade
             ':data_venda' => $dados['data_venda'],
             ':valor_total' => (float)$dados['valor_total'],
             ':metodo_pagamento_id' => (int)$dados['metodo_pagamento_id'],
-            ':ambiente_venda_id' => (int)$dados['ambiente_venda_id']
+            ':ambiente_venda_id' => (int)$dados['ambiente_venda_id'],
+            ':criado_por' => $idUsuario
         ]);
 
         return (int)$conn->lastInsertId();
@@ -104,18 +105,18 @@ class Venda implements IEntidade
      * Edita uma venda existente.
      * `data_alteracao` é gerenciado pelo banco de dados.
      */
-    public function editar(\PDO $conn, ?int $id, array $dados): bool
+    public function editar(\PDO $conn, ?int $idRegistro, array $dados, int $idUsuario): bool
     {
-        if (empty($id)) throw new \Exception("ID é obrigatório para edição.", 400);
-        if (!$this->buscarPorId($conn, $id)) throw new \Exception("O registro não foi encontrado.", 404);
+        if (empty($idRegistro)) throw new \Exception("ID é obrigatório para edição.", 400);
+        if (!$this->buscarPorId($conn, $idRegistro)) throw new \Exception("O registro não foi encontrado.", 404);
 
-        $erros = $this->validar($conn, $dados, $id);
+        $erros = $this->validar($conn, $dados, $idRegistro);
         if (!empty($erros)) throw new \Exception(implode("\n", $erros), 400);
 
         $sql = "UPDATE " . self::$tabela . " SET 
                     cliente_id = :cliente_id, vendedor_id = :vendedor_id, data_venda = :data_venda, 
                     valor_total = :valor_total, metodo_pagamento_id = :metodo_pagamento_id, 
-                    ambiente_venda_id = :ambiente_venda_id, alterado_por = 1
+                    ambiente_venda_id = :ambiente_venda_id, alterado_por = :alterado_por
                 WHERE id = :id";
         
         $stmt = $conn->prepare($sql);
@@ -126,7 +127,8 @@ class Venda implements IEntidade
             ':valor_total' => (float)$dados['valor_total'],
             ':metodo_pagamento_id' => (int)$dados['metodo_pagamento_id'],
             ':ambiente_venda_id' => (int)$dados['ambiente_venda_id'],
-            ':id' => $id
+            ':alterado_por' => $idUsuario,
+            ':id' => $idRegistro
         ]);
     }
 
@@ -134,14 +136,14 @@ class Venda implements IEntidade
      * Realiza a exclusão física de uma venda.
      * CUIDADO: Esta ação é irreversível e pode deixar itens de venda órfãos se não forem tratados.
      */
-    public function deletar(\PDO $conn, ?int $id): bool
+    public function deletar(\PDO $conn, ?int $idRegistro, int $idUsuario): bool
     {
-        if (empty($id)) throw new \Exception("ID é obrigatório para exclusão.", 400);
-        if (!$this->buscarPorId($conn, $id)) throw new \Exception("O registro não foi encontrado.", 404);
+        if (empty($idRegistro)) throw new \Exception("ID é obrigatório para exclusão.", 400);
+        if (!$this->buscarPorId($conn, $idRegistro)) throw new \Exception("O registro não foi encontrado.", 404);
 
         $sql = "DELETE FROM " . self::$tabela . " WHERE id = :id";
         $stmt = $conn->prepare($sql);
-        return $stmt->execute([':id' => $id]);
+        return $stmt->execute([':id' => $idRegistro]);
     }
 
     /**

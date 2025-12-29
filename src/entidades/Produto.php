@@ -102,7 +102,7 @@ class Produto implements IEntidade
      * Cadastra um novo produto.
      * `data_criacao` e `status_registro` são gerenciados pelo banco de dados.
      */
-    public function cadastrar(\PDO $conn, array $dados): bool
+    public function cadastrar(\PDO $conn, array $dados, int $idUsuario): bool
     {
         $erros = $this->validar($conn, $dados);
         if (!empty($erros)) {
@@ -111,7 +111,7 @@ class Produto implements IEntidade
 
         $sql = "INSERT INTO " . self::$tabela . " 
                     (nome, descricao, preco_custo, preco_venda, quantidade_comprada, unidade_medida_id, fornecedor_id, criado_por) 
-                    VALUES (:nome, :descricao, :preco_custo, :preco_venda, :quantidade_comprada, :unidade_medida_id, :fornecedor_id, 1)";
+                    VALUES (:nome, :descricao, :preco_custo, :preco_venda, :quantidade_comprada, :unidade_medida_id, :fornecedor_id, :criado_por)";
         
         $stmt = $conn->prepare($sql);
         return $stmt->execute([
@@ -121,7 +121,8 @@ class Produto implements IEntidade
             ':preco_venda' => (float)$dados['preco_venda'],
             ':quantidade_comprada' => (int)$dados['quantidade_comprada'],
             ':unidade_medida_id' => (int)$dados['unidade_medida_id'],
-            ':fornecedor_id' => (int)$dados['fornecedor_id']
+            ':fornecedor_id' => (int)$dados['fornecedor_id'],
+            ':criado_por' => $idUsuario
         ]);
     }
 
@@ -129,18 +130,18 @@ class Produto implements IEntidade
      * Edita um produto existente.
      * `data_alteracao` é gerenciado automaticamente pelo banco de dados.
      */
-    public function editar(\PDO $conn, ?int $id, array $dados): bool
+    public function editar(\PDO $conn, ?int $idRegistro, array $dados, int $idUsuario): bool
     {
-        if (empty($id)) throw new \Exception("ID é obrigatório para edição.", 400);
-        if (!$this->buscarPorId($conn, $id)) throw new \Exception("O registro não foi encontrado.", 404);
+        if (empty($idRegistro)) throw new \Exception("ID é obrigatório para edição.", 400);
+        if (!$this->buscarPorId($conn, $idRegistro)) throw new \Exception("O registro não foi encontrado.", 404);
 
-        $erros = $this->validar($conn, $dados, $id);
+        $erros = $this->validar($conn, $dados, $idRegistro);
         if (!empty($erros)) throw new \Exception(implode("\n", $erros), 400);
 
         $sql = "UPDATE " . self::$tabela . " SET 
                     nome = :nome, descricao = :descricao, preco_custo = :preco_custo, preco_venda = :preco_venda, 
                     quantidade_comprada = :quantidade_comprada, unidade_medida_id = :unidade_medida_id, fornecedor_id = :fornecedor_id, 
-                    alterado_por = 1
+                    alterado_por = :alterado_por
                 WHERE id = :id";
         
         $stmt = $conn->prepare($sql);
@@ -152,7 +153,8 @@ class Produto implements IEntidade
             ':quantidade_comprada' => (int)$dados['quantidade_comprada'],
             ':unidade_medida_id' => (int)$dados['unidade_medida_id'],
             ':fornecedor_id' => (int)$dados['fornecedor_id'],
-            ':id' => $id
+            ':alterado_por' => $idUsuario,
+            ':id' => $idRegistro
         ]);
     }
 
@@ -160,14 +162,17 @@ class Produto implements IEntidade
      * Realiza a exclusão lógica de um produto.
      * `data_alteracao` é gerenciado automaticamente pelo banco de dados.
      */
-    public function deletar(\PDO $conn, ?int $id): bool
+    public function deletar(\PDO $conn, ?int $idRegistro, int $idUsuario): bool
     {
-        if (empty($id)) throw new \Exception("ID é obrigatório para exclusão.", 400);
-        if (!$this->buscarPorId($conn, $id)) throw new \Exception("O registro não foi encontrado.", 404);
+        if (empty($idRegistro)) throw new \Exception("ID é obrigatório para exclusão.", 400);
+        if (!$this->buscarPorId($conn, $idRegistro)) throw new \Exception("O registro não foi encontrado.", 404);
 
-        $sql = "UPDATE " . self::$tabela . " SET status_registro = 0, alterado_por = 1 WHERE id = :id";
+        $sql = "UPDATE " . self::$tabela . " SET status_registro = 0, alterado_por = :alterado_por WHERE id = :id";
         $stmt = $conn->prepare($sql);
-        return $stmt->execute([':id' => $id]);
+        return $stmt->execute([
+            ':id' => $idRegistro,
+            ':alterado_por' => $idUsuario
+        ]);
     }
 
     /**
@@ -203,7 +208,7 @@ class Produto implements IEntidade
      * @return bool Retorna true em caso de sucesso.
      * @throws \Exception Se o produto não for encontrado ou o estoque ficar negativo.
      */
-    public function ajustarEstoque(\PDO $conn, int $produtoId, int $diferenca): bool
+    public function ajustarEstoque(\PDO $conn, int $produtoId, int $diferenca, int $idUsuario): bool
     {
         $produto = $this->buscarPorId($conn, $produtoId);
         if (!$produto) {
@@ -215,12 +220,13 @@ class Produto implements IEntidade
             throw new \Exception("Estoque insuficiente para o produto '{$produto['nome']}'.", 400);
         }
 
-        $sql = "UPDATE " . self::$tabela . " SET quantidade_comprada = :quantidade, alterado_por = 1 WHERE id = :id";
+        $sql = "UPDATE " . self::$tabela . " SET quantidade_comprada = :quantidade, alterado_por = :alterado_por WHERE id = :id";
         $stmt = $conn->prepare($sql);
         
         return $stmt->execute([
             ':quantidade' => $novaQuantidade,
-            ':id' => $produtoId
+            ':id' => $produtoId,
+            ':alterado_por' => $idUsuario
         ]);
     }
 }

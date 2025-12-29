@@ -1,7 +1,7 @@
 <?php
 // Define a URL base para o projeto.
 // Altere isso se o projeto não estiver na raiz do seu servidor web.
-define('BASE_URL', '/frango-fusca');
+define('BASE_URL', '');
 
 // Configurações do Banco de Dados
 define('DB_HOST', 'localhost');

@@ -10,6 +10,8 @@ use function FrangoFusca\Helpers\verificarMetodo;
 
 verificarMetodo('POST');
 
+require_once __DIR__ . '/../../src/core/verificar_sessao.php';
+
 try {
     $dados = [
         'cliente_id' => filter_input(INPUT_POST, 'cliente_id', FILTER_VALIDATE_INT),
@@ -19,11 +21,12 @@ try {
         'metodo_pagamento_id' => filter_input(INPUT_POST, 'metodo_pagamento_id', FILTER_VALIDATE_INT),
         'ambiente_venda_id' => filter_input(INPUT_POST, 'ambiente_venda_id', FILTER_VALIDATE_INT)
     ];
+    $idUsuario = $_SESSION['user_id'];
 
     $conn = Conexao::obterConexao();
     
     $venda = new Venda();
-    $vendaId = $venda->cadastrar($conn, $dados);
+    $vendaId = $venda->cadastrar($conn, $dados, $idUsuario);
     if ($vendaId) {
         echo json_encode(['status' => 'success', 'message' => 'Venda cadastrada com sucesso!', 'venda_id' => $vendaId]);
     } else {

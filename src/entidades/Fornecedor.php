@@ -90,7 +90,7 @@ class Fornecedor implements IEntidade
      * Cadastra um novo fornecedor.
      * `data_criacao` e `status_registro` são gerenciados pelo banco de dados.
      */
-    public function cadastrar(\PDO $conn, array $dados): bool
+    public function cadastrar(\PDO $conn, array $dados, int $idUsuario): bool
     {
         $erros = $this->validar($conn, $dados);
         if (!empty($erros)) {
@@ -99,7 +99,7 @@ class Fornecedor implements IEntidade
 
         $sql = "INSERT INTO " . self::$tabela . " 
                     (nome, cnpj_cpf, email, telefone, endereco, criado_por) 
-                    VALUES (:nome, :cnpj_cpf, :email, :telefone, :endereco, 1)";
+                    VALUES (:nome, :cnpj_cpf, :email, :telefone, :endereco, :criado_por)";
         
         $stmt = $conn->prepare($sql);
         return $stmt->execute([
@@ -107,7 +107,8 @@ class Fornecedor implements IEntidade
             ':cnpj_cpf' => empty($dados['cnpj_cpf']) ? null : $dados['cnpj_cpf'],
             ':email' => empty($dados['email']) ? null : $dados['email'],
             ':telefone' => empty($dados['telefone']) ? null : $dados['telefone'],
-            ':endereco' => empty($dados['endereco']) ? null : $dados['endereco']
+            ':endereco' => empty($dados['endereco']) ? null : $dados['endereco'],
+            ':criado_por' => $idUsuario
         ]);
     }
 
@@ -115,23 +116,23 @@ class Fornecedor implements IEntidade
      * Edita um fornecedor existente.
      * `data_alteracao` é gerenciado automaticamente pelo banco de dados.
      */
-    public function editar(\PDO $conn, ?int $id, array $dados): bool
+    public function editar(\PDO $conn, ?int $idRegistro, array $dados, int $idUsuario): bool
     {
-        if (empty($id)) {
+        if (empty($idRegistro)) {
             throw new \Exception("ID é obrigatório para edição.", 400);
         }
-        if (!$this->buscarPorId($conn, $id)) {
+        if (!$this->buscarPorId($conn, $idRegistro)) {
             throw new \Exception("O registro não foi encontrado.", 404);
         }
 
-        $erros = $this->validar($conn, $dados, $id);
+        $erros = $this->validar($conn, $dados, $idRegistro);
         if (!empty($erros)) {
             throw new \Exception(implode("\n", $erros), 400);
         }
 
         $sql = "UPDATE " . self::$tabela . " SET 
                     nome = :nome, cnpj_cpf = :cnpj_cpf, email = :email, 
-                    telefone = :telefone, endereco = :endereco, alterado_por = 1
+                    telefone = :telefone, endereco = :endereco, alterado_por = :alterado_por
                 WHERE id = :id";
         
         $stmt = $conn->prepare($sql);
@@ -141,7 +142,8 @@ class Fornecedor implements IEntidade
             ':email' => empty($dados['email']) ? null : $dados['email'],
             ':telefone' => empty($dados['telefone']) ? null : $dados['telefone'],
             ':endereco' => empty($dados['endereco']) ? null : $dados['endereco'],
-            ':id' => $id
+            ':alterado_por' => $idUsuario,
+            ':id' => $idRegistro
         ]);
     }
 
@@ -149,18 +151,21 @@ class Fornecedor implements IEntidade
      * Realiza a exclusão lógica de um fornecedor, definindo `status_registro` como 0.
      * `data_alteracao` é gerenciado automaticamente pelo banco de dados.
      */
-    public function deletar(\PDO $conn, ?int $id): bool
+    public function deletar(\PDO $conn, ?int $idRegistro, int $idUsuario): bool
     {
-        if (empty($id)) {
+        if (empty($idRegistro)) {
             throw new \Exception("ID é obrigatório para exclusão.", 400);
         }
-        if (!$this->buscarPorId($conn, $id)) {
+        if (!$this->buscarPorId($conn, $idRegistro)) {
             throw new \Exception("O registro não foi encontrado.", 404);
         }
 
-        $sql = "UPDATE " . self::$tabela . " SET status_registro = 0, alterado_por = 1 WHERE id = :id";
+        $sql = "UPDATE " . self::$tabela . " SET status_registro = 0, alterado_por = :alterado_por WHERE id = :id";
         $stmt = $conn->prepare($sql);
-        return $stmt->execute([':id' => $id]);
+        return $stmt->execute([
+            ':id' => $idRegistro,
+            ':alterado_por' => $idUsuario
+        ]);
     }
 
     /**

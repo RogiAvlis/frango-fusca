@@ -10,13 +10,16 @@ use function FrangoFusca\Helpers\verificarMetodo;
 
 verificarMetodo('POST');
 
+require_once __DIR__ . '/../../src/core/verificar_sessao.php';
+
 try {
-    $id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
+    $idRegistro = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
+    $idUsuario = $_SESSION['user_id'];
     
     $conn = Conexao::obterConexao();
     
     $unidadeMedida = new UnidadeMedida();
-    if ($unidadeMedida->deletar($conn, $id)) {
+    if ($unidadeMedida->deletar($conn, $idRegistro, $idUsuario)) {
         echo json_encode(['status' => 'success', 'message' => 'Unidade de medida deletada com sucesso!']);
     } else {
         // Esta condição é menos provável com a validação de ID dentro do método

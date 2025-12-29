@@ -74,19 +74,20 @@ class MaquinaVenda implements IEntidade
      * Cadastra uma nova máquina de venda.
      * `data_criacao` e `status_registro` são gerenciados pelo banco de dados.
      */
-    public function cadastrar(\PDO $conn, array $dados): bool
+    public function cadastrar(\PDO $conn, array $dados, int $idUsuario): bool
     {
         $erros = $this->validar($conn, $dados);
         if (!empty($erros)) {
             throw new \Exception(implode("\n", $erros), 400);
         }
 
-        $sql = "INSERT INTO " . self::$tabela . " (nome, descricao, taxa, criado_por) VALUES (:nome, :descricao, :taxa, 1)";
+        $sql = "INSERT INTO " . self::$tabela . " (nome, descricao, taxa, criado_por) VALUES (:nome, :descricao, :taxa, :criado_por)";
         $stmt = $conn->prepare($sql);
         return $stmt->execute([
             ':nome' => $dados['nome'],
             ':descricao' => empty($dados['descricao']) ? null : $dados['descricao'],
-            ':taxa' => (float)($dados['taxa'] ?? 0.00)
+            ':taxa' => (float)($dados['taxa'] ?? 0.00),
+            ':criado_por' => $idUsuario
         ]);
     }
 
@@ -94,27 +95,28 @@ class MaquinaVenda implements IEntidade
      * Edita uma máquina de venda existente.
      * `data_alteracao` é gerenciado automaticamente pelo banco de dados.
      */
-    public function editar(\PDO $conn, ?int $id, array $dados): bool
+    public function editar(\PDO $conn, ?int $idRegistro, array $dados, int $idUsuario): bool
     {
-        if (empty($id)) {
+        if (empty($idRegistro)) {
             throw new \Exception("ID é obrigatório para edição.", 400);
         }
-        if (!$this->buscarPorId($conn, $id)) {
+        if (!$this->buscarPorId($conn, $idRegistro)) {
             throw new \Exception("O registro não foi encontrado.", 404);
         }
 
-        $erros = $this->validar($conn, $dados, $id);
+        $erros = $this->validar($conn, $dados, $idRegistro);
         if (!empty($erros)) {
             throw new \Exception(implode("\n", $erros), 400);
         }
 
-        $sql = "UPDATE " . self::$tabela . " SET nome = :nome, descricao = :descricao, taxa = :taxa, alterado_por = 1 WHERE id = :id";
+        $sql = "UPDATE " . self::$tabela . " SET nome = :nome, descricao = :descricao, taxa = :taxa, alterado_por = :alterado_por WHERE id = :id";
         $stmt = $conn->prepare($sql);
         return $stmt->execute([
             ':nome' => $dados['nome'],
             ':descricao' => empty($dados['descricao']) ? null : $dados['descricao'],
             ':taxa' => (float)($dados['taxa'] ?? 0.00),
-            ':id' => $id
+            ':alterado_por' => $idUsuario,
+            ':id' => $idRegistro
         ]);
     }
 
@@ -122,18 +124,21 @@ class MaquinaVenda implements IEntidade
      * Realiza a exclusão lógica de uma máquina de venda.
      * `data_alteracao` é gerenciado automaticamente pelo banco de dados.
      */
-    public function deletar(\PDO $conn, ?int $id): bool
+    public function deletar(\PDO $conn, ?int $idRegistro, int $idUsuario): bool
     {
-        if (empty($id)) {
+        if (empty($idRegistro)) {
             throw new \Exception("ID é obrigatório para exclusão.", 400);
         }
-        if (!$this->buscarPorId($conn, $id)) {
+        if (!$this->buscarPorId($conn, $idRegistro)) {
             throw new \Exception("O registro não foi encontrado.", 404);
         }
 
-        $sql = "UPDATE " . self::$tabela . " SET status_registro = 0, alterado_por = 1 WHERE id = :id";
+        $sql = "UPDATE " . self::$tabela . " SET status_registro = 0, alterado_por = :alterado_por WHERE id = :id";
         $stmt = $conn->prepare($sql);
-        return $stmt->execute([':id' => $id]);
+        return $stmt->execute([
+            ':id' => $idRegistro,
+            ':alterado_por' => $idUsuario
+        ]);
     }
 
     /**

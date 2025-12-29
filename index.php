@@ -31,7 +31,7 @@
             
             <div class="my-2">
                 <label class="form-label" for="password">Senha</label>
-                <input type="password" name="password" class="form-control" placeholder="Digite sua senha" autocomplete="off" required>
+                <input type="password" name="senha" class="form-control" placeholder="Digite sua senha" autocomplete="off" required>
             </div>
 
             <div class="text-end my-2">

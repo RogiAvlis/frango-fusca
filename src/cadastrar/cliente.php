@@ -10,17 +10,20 @@ use function FrangoFusca\Helpers\verificarMetodo;
 
 verificarMetodo('POST');
 
+require_once __DIR__ . '/../../src/core/verificar_sessao.php';
+
 try {
     $dados = [
         'status_registro' => filter_input(INPUT_POST, 'status_registro', FILTER_VALIDATE_INT),
         'nome' => trim(filter_input(INPUT_POST, 'nome', FILTER_DEFAULT)),
         'telefone' => trim(filter_input(INPUT_POST, 'telefone', FILTER_DEFAULT))
     ];
+    $idUsuario = $_SESSION['user_id'];
 
     $conn = Conexao::obterConexao();
     
     $cliente = new Cliente();
-    if ($cliente->cadastrar($conn, $dados)) {
+    if ($cliente->cadastrar($conn, $dados, $idUsuario)) {
         echo json_encode(['status' => 'success', 'message' => 'Cliente cadastrado com sucesso!']);
     } else {
         http_response_code(500);

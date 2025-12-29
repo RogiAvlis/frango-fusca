@@ -10,6 +10,8 @@ use function FrangoFusca\Helpers\verificarMetodo;
 
 verificarMetodo('POST');
 
+require_once __DIR__ . '/../../src/core/verificar_sessao.php';
+
 try {
     $dados = [
         'nome' => trim(filter_input(INPUT_POST, 'nome', FILTER_DEFAULT)),
@@ -17,11 +19,12 @@ try {
         'agencia' => trim(filter_input(INPUT_POST, 'agencia', FILTER_DEFAULT)),
         'conta' => trim(filter_input(INPUT_POST, 'conta', FILTER_DEFAULT))
     ];
+    $idUsuario = $_SESSION['user_id'];
 
     $conn = Conexao::obterConexao();
     
     $metodoPagamento = new MetodoPagamento();
-    if ($metodoPagamento->cadastrar($conn, $dados)) {
+    if ($metodoPagamento->cadastrar($conn, $dados, $idUsuario)) {
         echo json_encode(['status' => 'success', 'message' => 'Método de pagamento cadastrado com sucesso!']);
     } else {
         http_response_code(500);

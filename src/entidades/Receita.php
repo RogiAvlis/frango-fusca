@@ -93,21 +93,22 @@ class Receita implements IEntidade
      * Cadastra um novo ingrediente a uma receita.
      * `data_criacao` e `status_registro` são gerenciados pelo banco de dados.
      */
-    public function cadastrar(\PDO $conn, array $dados): bool
+    public function cadastrar(\PDO $conn, array $dados, int $idUsuario): bool
     {
         $erros = $this->validar($conn, $dados);
         if (!empty($erros)) throw new \Exception(implode("\n", $erros), 400);
 
         $sql = "INSERT INTO " . self::$tabela . " 
                     (produto_principal_id, produto_ingrediente_id, quantidade_necessaria, unidade_medida_id, criado_por) 
-                    VALUES (:produto_principal_id, :produto_ingrediente_id, :quantidade_necessaria, :unidade_medida_id, 1)";
+                    VALUES (:produto_principal_id, :produto_ingrediente_id, :quantidade_necessaria, :unidade_medida_id, :criado_por)";
         
         $stmt = $conn->prepare($sql);
         return $stmt->execute([
             ':produto_principal_id' => (int)$dados['produto_principal_id'],
             ':produto_ingrediente_id' => (int)$dados['produto_ingrediente_id'],
             ':quantidade_necessaria' => (float)$dados['quantidade_necessaria'],
-            ':unidade_medida_id' => (int)$dados['unidade_medida_id']
+            ':unidade_medida_id' => (int)$dados['unidade_medida_id'],
+            ':criado_por' => $idUsuario
         ]);
     }
 
@@ -115,18 +116,18 @@ class Receita implements IEntidade
      * Edita um ingrediente de uma receita.
      * `data_alteracao` é gerenciado automaticamente pelo banco de dados.
      */
-    public function editar(\PDO $conn, ?int $id, array $dados): bool
+    public function editar(\PDO $conn, ?int $idRegistro, array $dados, int $idUsuario): bool
     {
-        if (empty($id)) throw new \Exception("ID é obrigatório para edição.", 400);
-        if (!$this->buscarPorId($conn, $id)) throw new \Exception("O registro não foi encontrado.", 404);
+        if (empty($idRegistro)) throw new \Exception("ID é obrigatório para edição.", 400);
+        if (!$this->buscarPorId($conn, $idRegistro)) throw new \Exception("O registro não foi encontrado.", 404);
 
-        $erros = $this->validar($conn, $dados, $id);
+        $erros = $this->validar($conn, $dados, $idRegistro);
         if (!empty($erros)) throw new \Exception(implode("\n", $erros), 400);
 
         $sql = "UPDATE " . self::$tabela . " SET 
                     produto_principal_id = :produto_principal_id, produto_ingrediente_id = :produto_ingrediente_id, 
                     quantidade_necessaria = :quantidade_necessaria, unidade_medida_id = :unidade_medida_id, 
-                    alterado_por = 1
+                    alterado_por = :alterado_por
                 WHERE id = :id";
         
         $stmt = $conn->prepare($sql);
@@ -135,7 +136,8 @@ class Receita implements IEntidade
             ':produto_ingrediente_id' => (int)$dados['produto_ingrediente_id'],
             ':quantidade_necessaria' => (float)$dados['quantidade_necessaria'],
             ':unidade_medida_id' => (int)$dados['unidade_medida_id'],
-            ':id' => $id
+            ':alterado_por' => $idUsuario,
+            ':id' => $idRegistro
         ]);
     }
 
@@ -143,14 +145,17 @@ class Receita implements IEntidade
      * Realiza a exclusão lógica de um ingrediente da receita.
      * `data_alteracao` é gerenciado automaticamente pelo banco de dados.
      */
-    public function deletar(\PDO $conn, ?int $id): bool
+    public function deletar(\PDO $conn, ?int $idRegistro, int $idUsuario): bool
     {
-        if (empty($id)) throw new \Exception("ID é obrigatório para exclusão.", 400);
-        if (!$this->buscarPorId($conn, $id)) throw new \Exception("O registro não foi encontrado.", 404);
+        if (empty($idRegistro)) throw new \Exception("ID é obrigatório para exclusão.", 400);
+        if (!$this->buscarPorId($conn, $idRegistro)) throw new \Exception("O registro não foi encontrado.", 404);
 
-        $sql = "UPDATE " . self::$tabela . " SET status_registro = 0, alterado_por = 1 WHERE id = :id";
+        $sql = "UPDATE " . self::$tabela . " SET status_registro = 0, alterado_por = :alterado_por WHERE id = :id";
         $stmt = $conn->prepare($sql);
-        return $stmt->execute([':id' => $id]);
+        return $stmt->execute([
+            ':id' => $idRegistro,
+            ':alterado_por' => $idUsuario
+        ]);
     }
 
     /**
