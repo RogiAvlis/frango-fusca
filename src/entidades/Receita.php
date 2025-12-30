@@ -60,7 +60,7 @@ class Receita implements IEntidade
                 $valores[':id'] = $id;
             }
 
-            if ($this->query($conn, 'id', '', $filtro, $valores)->fetch()) {
+            if ($this->query($conn, coluna: 'id', filtro: $filtro, valor: $valores)->fetch()) {
                 $erros['duplicidade'] = 'Esta combinação de Produto Principal e Ingrediente já existe na receita.';
             }
         }
@@ -71,7 +71,7 @@ class Receita implements IEntidade
     /**
      * Constrói e executa uma consulta SQL, filtrando automaticamente por `status_registro = 1`.
      */
-    public function query(\PDO $conn, string $coluna = '*', string $join = '', string $filtro = '', array $valor = [], string $ordem = '', string $agrupamento = '', string $limit = ''): \PDOStatement
+    public function query(\PDO $conn, string $coluna = '*', ?string $join = '', ?string $filtro = '', ?array $valor = [], ?string $ordem = '', ?string $agrupamento = '', ?string $limit = ''): \PDOStatement
     {
         $sql = "SELECT {$coluna} FROM " . self::$tabela . " r"; // Alias 'r' for consistency
         if (!empty($join)) $sql .= " {$join}";
@@ -167,7 +167,7 @@ class Receita implements IEntidade
         $join = 'JOIN produto pp ON r.produto_principal_id = pp.id 
                  JOIN produto pi ON r.produto_ingrediente_id = pi.id 
                  JOIN unidade_medida um ON r.unidade_medida_id = um.id';
-        $stmt = $this->query($conn, $cols, $join, $filtro, $valor, 'pp.nome ASC, pi.nome ASC');
+        $stmt = $this->query($conn, coluna: $cols, join: $join, filtro: $filtro, valor: $valor, ordem: 'pp.nome ASC, pi.nome ASC');
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 

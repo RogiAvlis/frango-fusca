@@ -62,7 +62,7 @@ class AmbienteVenda implements IEntidade
      * @param string $limit O limite de resultados.
      * @return \PDOStatement O statement preparado e executado.
      */
-    public function query(\PDO $conn, string $coluna = '*', string $join = '', string $filtro = '', array $valor = [], string $ordem = '', string $agrupamento = '', string $limit = ''): \PDOStatement
+    public function query(\PDO $conn, string $coluna = '*', ?string $join = '', ?string $filtro = '', ?array $valor = [], ?string $ordem = '', ?string $agrupamento = '', ?string $limit = ''): \PDOStatement
     {
         $sql = "SELECT {$coluna} FROM " . self::$tabela;
         if (!empty($join)) $sql .= " {$join}";

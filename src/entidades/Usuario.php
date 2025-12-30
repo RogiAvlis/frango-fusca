@@ -45,7 +45,7 @@ class Usuario implements IEntidade
                 $valores[':id'] = $id;
             }
             
-            if ($this->query($conn, 'id', '', $filtro, $valores)->fetch()) {
+            if ($this->query($conn, coluna: 'id', filtro: $filtro, valor: $valores)->fetch()) {
                 $erros['email'] = 'Já existe um usuário com este e-mail.';
             }
         }
@@ -56,7 +56,7 @@ class Usuario implements IEntidade
     /**
      * Constrói e executa uma consulta SQL, filtrando automaticamente por `status_registro = 1`.
      */
-    public function query(\PDO $conn, string $coluna = '*', string $join = '', string $filtro = '', array $valor = [], string $ordem = '', string $agrupamento = '', string $limit = ''): \PDOStatement
+    public function query(\PDO $conn, string $coluna = '*', ?string $join = '', ?string $filtro = '', ?array $valor = [], ?string $ordem = '', ?string $agrupamento = '', ?string $limit = ''): \PDOStatement
     {
         $sql = "SELECT {$coluna} FROM " . self::$tabela;
         if (!empty($join)) $sql .= " {$join}";
@@ -147,7 +147,7 @@ class Usuario implements IEntidade
     public function listar(\PDO $conn, ?string $filtro = null, ?array $valor = null): array
     {
         $cols = 'id, nome, email';
-        $stmt = $this->query($conn, $cols, '', $filtro, $valor);
+        $stmt = $this->query($conn, coluna: $cols, filtro: $filtro, valor: $valor);
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
@@ -159,7 +159,7 @@ class Usuario implements IEntidade
         if (empty($id)) return null;
         
         $cols = 'id, nome, email';
-        $stmt = $this->query($conn, $cols, '', 'id = :id', [':id' => $id]);
+        $stmt = $this->query($conn, coluna: $cols, filtro: 'id = :id', valor: [':id' => $id]);
         $resultado = $stmt->fetch(\PDO::FETCH_ASSOC);
         return $resultado ?: null;
     }

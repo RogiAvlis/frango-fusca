@@ -15,6 +15,12 @@ $(document).ready(function () {
       type: "GET",
       dataSrc: "data",
     },
+    columnDefs: [
+      {
+        targets: "_all",
+        className: "text-center",
+      },
+    ],
     columns: [
       { data: "id" },
       { data: "nome" },

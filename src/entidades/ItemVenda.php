@@ -51,7 +51,7 @@ class ItemVenda implements IEntidade
                 $valores[':id'] = $id;
             }
 
-            if ($this->query($conn, 'id', '', $filtro, $valores)->fetch()) {
+            if ($this->query($conn, coluna: 'id', filtro: $filtro, valor: $valores)->fetch()) {
                 $erros['duplicidade'] = 'Este produto já foi adicionado a esta venda.';
             }
         }
@@ -62,7 +62,7 @@ class ItemVenda implements IEntidade
     /**
      * Constrói e executa uma consulta SQL, filtrando automaticamente por `status_registro = 1`.
      */
-    public function query(\PDO $conn, string $coluna = '*', string $join = '', string $filtro = '', array $valor = [], string $ordem = '', string $agrupamento = '', string $limit = ''): \PDOStatement
+    public function query(\PDO $conn, string $coluna = '*', ?string $join = '', ?string $filtro = '', ?array $valor = [], ?string $ordem = '', ?string $agrupamento = '', ?string $limit = ''): \PDOStatement
     {
         $sql = "SELECT {$coluna} FROM " . self::$tabela . " iv"; // Alias 'iv'
         if (!empty($join)) $sql .= " {$join}";
@@ -215,7 +215,7 @@ class ItemVenda implements IEntidade
         $cols = 'iv.id, iv.venda_id, iv.produto_id, p.nome as produto_nome, iv.quantidade, iv.preco_venda';
         $join = 'JOIN produto p ON iv.produto_id = p.id';
         $filtro = 'iv.venda_id = :venda_id';
-        $stmt = $this->query($conn, $cols, $join, $filtro, [':venda_id' => $vendaId], 'p.nome ASC');
+        $stmt = $this->query($conn, coluna: $cols, join: $join, filtro: $filtro, valor: [':venda_id' => $vendaId], ordem: 'p.nome ASC');
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
     
@@ -226,7 +226,7 @@ class ItemVenda implements IEntidade
     {
         $cols = 'iv.id, iv.venda_id, iv.produto_id, p.nome as produto_nome, iv.quantidade, iv.preco_venda';
         $join = 'JOIN produto p ON iv.produto_id = p.id';
-        $stmt = $this->query($conn, $cols, $join, $filtro, $valor, 'iv.id ASC');
+        $stmt = $this->query($conn, coluna: $cols, join: $join, filtro: $filtro, valor: $valor, ordem: 'iv.id ASC');
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 

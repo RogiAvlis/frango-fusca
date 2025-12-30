@@ -26,7 +26,7 @@ require_once __DIR__ . '/../config/config.php';
 
 <?php if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true): ?>
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <div class="container">
+    <div class="container-fluid px-0 mx-4">
         <a class="navbar-brand" href="<?php echo BASE_URL; ?>/pages/dashboard_vendas.php">
             <img src="<?php echo BASE_URL; ?>/assets/img/frango_fusca_alternativa_3_sem_fundo.png" alt="Logo" style="height: 40px;">
             Frango do Fusca

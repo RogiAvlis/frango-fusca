@@ -7,7 +7,7 @@ $page_title = "Custos Mensais";
 require_once __DIR__ . '/../templates/header.php';
 ?>
 
-<div class="container mt-5">
+<div class="container-fluid p-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1><i class="fas fa-file-invoice-dollar me-2"></i>Gerenciar Custos Mensais</h1>
         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalCustoMensal">

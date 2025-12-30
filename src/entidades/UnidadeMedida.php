@@ -31,8 +31,8 @@ class UnidadeMedida implements IEntidade
                 $filtro .= ' AND id != :id';
                 $valores[':id'] = $id;
             }
-            
-            if ($this->query($conn, 'id', '', $filtro, $valores)->fetch()) {
+
+            if ($this->query($conn, coluna: 'id', filtro: $filtro, valor: $valores)->fetch()) {
                 $erros['duplicidade'] = 'Sigla ou nome já cadastrado em um registro ativo.';
             }
         }
@@ -43,7 +43,7 @@ class UnidadeMedida implements IEntidade
     /**
      * Constrói e executa uma consulta SQL, filtrando automaticamente por `status_registro = 1`.
      */
-    public function query(\PDO $conn, string $coluna = '*', string $join = '', string $filtro = '', array $valor = [], string $ordem = '', string $agrupamento = '', string $limit = ''): \PDOStatement
+    public function query(\PDO $conn, string $coluna = '*', ?string $join = '', ?string $filtro = '', ?array $valor = [], ?string $ordem = '', ?string $agrupamento = '', ?string $limit = ''): \PDOStatement
     {
         $sql = "SELECT {$coluna} FROM " . self::$tabela;
         if (!empty($join)) $sql .= " {$join}";
@@ -73,7 +73,7 @@ class UnidadeMedida implements IEntidade
         $sql = "INSERT INTO " . self::$tabela . " (sigla, nome, criado_por) VALUES (:sigla, :nome, :criado_por)";
         $stmt = $conn->prepare($sql);
         return $stmt->execute([
-            ':sigla' => $dados['sigla'], 
+            ':sigla' => $dados['sigla'],
             ':nome' => $dados['nome'],
             ':criado_por' => $idUsuario
         ]);
@@ -94,8 +94,8 @@ class UnidadeMedida implements IEntidade
         $sql = "UPDATE " . self::$tabela . " SET sigla = :sigla, nome = :nome, alterado_por = :alterado_por WHERE id = :id";
         $stmt = $conn->prepare($sql);
         return $stmt->execute([
-            ':sigla' => $dados['sigla'], 
-            ':nome' => $dados['nome'], 
+            ':sigla' => $dados['sigla'],
+            ':nome' => $dados['nome'],
             ':alterado_por' => $idUsuario,
             ':id' => $idRegistro
         ]);
@@ -123,8 +123,15 @@ class UnidadeMedida implements IEntidade
      */
     public function listar(\PDO $conn, ?string $filtro = null, ?array $valor = null): array
     {
-        $stmt = $this->query($conn, 'id, sigla, nome', '', $filtro, $valor);
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        try {
+            $stmt = $this->query($conn, coluna: 'id, sigla, nome', filtro: $filtro, valor: $valor);
+            return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        } catch (\Throwable $th) {
+            return [
+                'error' => 'Erro ao consultar unidades de medida.',
+                'message' => $th->getMessage()
+            ];
+        }
     }
 
     /**
@@ -134,7 +141,7 @@ class UnidadeMedida implements IEntidade
     {
         if (empty($id)) return null;
 
-        $stmt = $this->query($conn, 'id, sigla, nome', '', 'id = :id', [':id' => $id]);
+        $stmt = $this->query($conn, coluna: 'id, sigla, nome', filtro: 'id = :id', valor: [':id' => $id]);
         $resultado = $stmt->fetch(\PDO::FETCH_ASSOC);
         return $resultado ?: null;
     }

@@ -69,7 +69,7 @@ class Produto implements IEntidade
                 $valores[':id'] = $id;
             }
 
-            if ($this->query($conn, 'id', '', $filtro, $valores)->fetch()) {
+            if ($this->query($conn, coluna: 'id', filtro: $filtro, valor: $valores)->fetch()) {
                 $erros['nome'] = 'Já existe um produto com este nome.';
             }
         }
@@ -80,7 +80,7 @@ class Produto implements IEntidade
     /**
      * Constrói e executa uma consulta SQL, filtrando automaticamente por `status_registro = 1`.
      */
-    public function query(\PDO $conn, string $coluna = '*', string $join = '', string $filtro = '', array $valor = [], string $ordem = '', string $agrupamento = '', string $limit = ''): \PDOStatement
+    public function query(\PDO $conn, string $coluna = '*', ?string $join = '', ?string $filtro = '', ?array $valor = [], ?string $ordem = '', ?string $agrupamento = '', ?string $limit = ''): \PDOStatement
     {
         $sql = "SELECT {$coluna} FROM " . self::$tabela . " p";
         if (!empty($join)) $sql .= " {$join}";
@@ -182,7 +182,7 @@ class Produto implements IEntidade
     {
         $cols = 'p.id, p.nome, p.descricao, p.preco_custo, p.preco_venda, p.quantidade_comprada, um.sigla as unidade_medida_sigla, f.nome as fornecedor_nome';
         $join = 'LEFT JOIN unidade_medida um ON p.unidade_medida_id = um.id LEFT JOIN fornecedor f ON p.fornecedor_id = f.id';
-        $stmt = $this->query($conn, $cols, $join, $filtro, $valor, 'p.nome ASC');
+        $stmt = $this->query($conn, coluna: $cols, join: $join, filtro: $filtro, valor: $valor, ordem: 'p.nome ASC');
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 

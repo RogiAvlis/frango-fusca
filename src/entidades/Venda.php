@@ -57,7 +57,7 @@ class Venda implements IEntidade
      * Constrói e executa uma consulta SQL genérica na tabela.
      * Nota: Esta tabela não usa exclusão lógica (status_registro).
      */
-    public function query(\PDO $conn, string $coluna = '*', string $join = '', string $filtro = '', array $valor = [], string $ordem = '', string $agrupamento = '', string $limit = ''): \PDOStatement
+    public function query(\PDO $conn, string $coluna = '*', ?string $join = '', ?string $filtro = '', ?array $valor = [], ?string $ordem = '', ?string $agrupamento = '', ?string $limit = ''): \PDOStatement
     {
         $sql = "SELECT {$coluna} FROM " . self::$tabela . " v";
         if (!empty($join)) $sql .= " {$join}";
@@ -157,7 +157,7 @@ class Venda implements IEntidade
                  JOIN metodo_pagamento mp ON v.metodo_pagamento_id = mp.id 
                  JOIN ambiente_venda av ON v.ambiente_venda_id = av.id';
         
-        $stmt = $this->query($conn, $cols, $join, $filtro, $valor, 'v.data_venda DESC');
+        $stmt = $this->query($conn, coluna: $cols, join: $join, filtro: $filtro, valor: $valor, ordem: 'v.data_venda DESC');
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
@@ -169,7 +169,7 @@ class Venda implements IEntidade
         if (empty($id)) return null;
 
         $cols = 'id, cliente_id, vendedor_id, data_venda, valor_total, metodo_pagamento_id, ambiente_venda_id';
-        $stmt = $this->query($conn, $cols, '', 'v.id = :id', [':id' => $id]);
+        $stmt = $this->query($conn, coluna: $cols, filtro: 'v.id = :id', valor: [':id' => $id]);
         $resultado = $stmt->fetch(\PDO::FETCH_ASSOC);
         return $resultado ?: null;
     }

@@ -5,7 +5,7 @@ $page_title = "Gerenciar [Nome da Entidade]";
 include_once 'header.php';
 ?>
 
-<div class="container mt-5">
+<div class="container-fluid p-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1><i class="fas fa-cogs me-2"></i>Gerenciar [Nome da Entidade]</h1>
         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalCadastro">

@@ -51,7 +51,7 @@ class MaquinaVenda implements IEntidade
     /**
      * Constrói e executa uma consulta SQL, filtrando automaticamente por `status_registro = 1`.
      */
-    public function query(\PDO $conn, string $coluna = '*', string $join = '', string $filtro = '', array $valor = [], string $ordem = '', string $agrupamento = '', string $limit = ''): \PDOStatement
+    public function query(\PDO $conn, string $coluna = '*', ?string $join = '', ?string $filtro = '', ?array $valor = [], ?string $ordem = '', ?string $agrupamento = '', ?string $limit = ''): \PDOStatement
     {
         $sql = "SELECT {$coluna} FROM " . self::$tabela;
         if (!empty($join)) $sql .= " {$join}";
@@ -146,7 +146,7 @@ class MaquinaVenda implements IEntidade
      */
     public function listar(\PDO $conn, ?string $filtro = null, ?array $valor = null): array
     {
-        $stmt = $this->query($conn, 'id, nome, descricao, taxa', '', $filtro, $valor);
+        $stmt = $this->query($conn, coluna: 'id, nome, descricao, taxa', filtro: $filtro, valor: $valor);
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
@@ -158,7 +158,7 @@ class MaquinaVenda implements IEntidade
         if (empty($id)) {
             throw new \Exception("ID é obrigatório para busca.", 400);
         }
-        $stmt = $this->query($conn, 'id, nome, descricao, taxa', '', 'id = :id', [':id' => $id]);
+        $stmt = $this->query($conn, coluna: 'id, nome, descricao, taxa', filtro: 'id = :id', valor: [':id' => $id]);
         $resultado = $stmt->fetch(\PDO::FETCH_ASSOC);
         return $resultado ?: null;
     }

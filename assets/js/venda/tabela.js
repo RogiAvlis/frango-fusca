@@ -15,27 +15,41 @@ $(document).ready(function () {
       type: "GET",
       dataSrc: "data",
     },
+    columnDefs: [
+      {
+        targets: "_all",
+        className: "text-center",
+      },
+    ],
     columns: [
       { data: "id" },
       { data: "cliente_nome" },
       { data: "vendedor_nome" },
-      { 
+      {
         data: "data_venda",
-        render: function(data, type, row) {
-            // Formata a data e hora de YYYY-MM-DD HH:MM:SS para DD/MM/YYYY HH:MM
-            if (type === 'display' && data) {
-                var parts = data.split(' ');
-                var dateParts = parts[0].split('-');
-                return dateParts[2] + '/' + dateParts[1] + '/' + dateParts[0] + ' ' + parts[1].substring(0, 5);
-            }
-            return data;
-        }
+        render: function (data, type, row) {
+          // Formata a data e hora de YYYY-MM-DD HH:MM:SS para DD/MM/YYYY HH:MM
+          if (type === "display" && data) {
+            var parts = data.split(" ");
+            var dateParts = parts[0].split("-");
+            return (
+              dateParts[2] +
+              "/" +
+              dateParts[1] +
+              "/" +
+              dateParts[0] +
+              " " +
+              parts[1].substring(0, 5)
+            );
+          }
+          return data;
+        },
       },
-      { 
+      {
         data: "valor_total",
-        render: function(data, type, row) {
-            return 'R$ ' + parseFloat(data).toFixed(2).replace('.', ',');
-        }
+        render: function (data, type, row) {
+          return "R$ " + parseFloat(data).toFixed(2).replace(".", ",");
+        },
       },
       { data: "metodo_pagamento_nome" },
       { data: "ambiente_venda_nome" },
@@ -57,6 +71,6 @@ $(document).ready(function () {
         className: "text-center",
       },
     ],
-    "order": [[ 3, "desc" ]] // Ordenar por data da venda descendente por padrão
+    order: [[3, "desc"]], // Ordenar por data da venda descendente por padrão
   });
 });

@@ -15,28 +15,34 @@ $(document).ready(function () {
       type: "GET",
       dataSrc: "data",
     },
+    columnDefs: [
+      {
+        targets: "_all",
+        className: "text-center",
+      },
+    ],
     columns: [
       { data: "id" },
-      { 
+      {
         data: "status_registro",
-        render: function(data, type, row) {
-            return data == 1 
-                ? '<span class="badge bg-success">Ativo</span>' 
-                : '<span class="badge bg-danger">Inativo</span>';
-        }
+        render: function (data, type, row) {
+          return data == 1
+            ? '<span class="badge bg-success">Ativo</span>'
+            : '<span class="badge bg-danger">Inativo</span>';
+        },
       },
       { data: "nome" },
-      { 
+      {
         data: "preco_custo",
-        render: function(data, type, row) {
-            return 'R$ ' + parseFloat(data).toFixed(2).replace('.', ',');
-        }
+        render: function (data, type, row) {
+          return "R$ " + parseFloat(data).toFixed(2).replace(".", ",");
+        },
       },
-      { 
+      {
         data: "preco_venda",
-        render: function(data, type, row) {
-            return 'R$ ' + parseFloat(data).toFixed(2).replace('.', ',');
-        }
+        render: function (data, type, row) {
+          return "R$ " + parseFloat(data).toFixed(2).replace(".", ",");
+        },
       },
       { data: "quantidade_comprada" },
       { data: "unidade_medida_sigla" },
