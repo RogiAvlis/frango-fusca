@@ -1,15 +1,17 @@
 {
     "name": "frango-fusca/frango-fusca",
-    "autoload": {
-        "psr-4": {
-            "FrangoFusca\\": "src/"
-        }
-    },
+    "description": "Sistema de Gestão Comercial e PDV para Loja de Alimentos",
+    "type": "project",
     "authors": [
         {
-            "name": "Igor Silva",
-            "email": "igorsilvadnascimento@gmail.com"
+            "name": "Igor Silva"
         }
     ],
+    "autoload": {
+        "psr-4": {
+            "FrangoFusca\\": "src/",
+            "Ossilvas\\FrangoFusca\\": "src/"
+        }
+    },
     "require": {}
 }

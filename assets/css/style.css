@@ -1,89 +1,179 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap');
-
+/* Design System Suave & Moderno - Frango Fusca */
 :root {
-    --cor-primaria: #5D9C9C; /* Azul Suave/Teal */
-    --cor-primaria-rgb: 93, 156, 156;
-    --cor-secundaria: #F5F7FA; /* Cinza Claro para fundos secundários */
-    --cor-acento: #4A90E2; /* Um azul mais vibrante se precisar de um destaque */
-    --cor-fundo: #FFFFFF; /* Branco Neve para o fundo principal */
-    --cor-texto: #333333; /* Grafite para o texto principal */
-    --cor-texto-secundario: #888888; /* Cinza Médio para texto secundário */
-
-    --font-principal: 'Nunito', sans-serif;
+    --primary-color: #e05638;
+    --primary-hover: #c84529;
+    --secondary-color: #f59e0b;
+    --dark-slate: #0f172a;
+    --sidebar-bg: #1e293b;
+    --body-bg: #f8fafc;
+    --card-border: #e2e8f0;
+    --text-main: #334155;
+    --text-muted: #64748b;
 }
 
 body {
-    font-family: var(--font-principal);
-    background-color: var(--cor-fundo);
-    color: var(--cor-texto);
+    font-family: 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
+    color: var(--text-main);
+    background-color: var(--body-bg);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
-h1, h2, h3, h4, h5, h6 {
-    font-weight: 700;
-    color: var(--cor-texto); /* Títulos em grafite */
+/* Sidebar Customizado Suave */
+aside.sidebar {
+    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-a {
-    color: var(--cor-primaria);
-    text-decoration: none !important;
+aside.sidebar .nav-link {
+    border-radius: 8px;
+    padding: 0.65rem 0.9rem;
+    transition: all 0.2s ease-in-out;
+    font-size: 0.9rem;
 }
 
-a:hover {
-    color: #4b7e7e; /* Um tom mais escuro do primário para o hover */
-    text-decoration: underline;
+aside.sidebar .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.08);
 }
 
-.bg-primaria {
-    background-color: var(--cor-primaria) !important;
-    color: var(--cor-fundo); /* Texto branco em fundo primário */
+aside.sidebar .nav-link.active {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+    color: #0f172a !important;
+    font-weight: 700 !important;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
 }
 
-.bg-secundaria {
-    background-color: var(--cor-secundaria) !important;
+/* Card Perfil na Sidebar */
+.sidebar-user-card {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
 }
 
-.text-primaria {
-    color: var(--cor-primaria) !important;
-}
+/* Custom UI Utilities */
+.fw-600 { font-weight: 600; }
+.fw-700 { font-weight: 700; }
+.fw-800 { font-weight: 800; }
 
-.text-secundaria {
-    color: var(--cor-texto-secundario) !important;
-}
-
-.btn-primario {
-    background-color: var(--cor-primaria);
-    color: var(--cor-fundo);
+/* Botões Suaves */
+.btn {
+    border-radius: 8px;
     font-weight: 600;
-    border: 1px solid var(--cor-primaria);
-    transition: all 0.3s ease;
+    padding: 0.5rem 1rem;
+    transition: all 0.2s ease;
 }
 
-.btn-primario:hover {
-    background-color: #4b7e7e; /* Tom mais escuro */
-    border-color: #4b7e7e;
-    color: var(--cor-fundo);
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    box-shadow: 0 2px 6px rgba(224, 86, 56, 0.2);
 }
 
-.btn-outline-primario {
-    background-color: transparent;
-    color: var(--cor-primaria);
-    font-weight: 600;
-    border: 1px solid var(--cor-primaria);
-    transition: all 0.3s ease;
+.btn-primary:hover, .btn-primary:focus {
+    background-color: var(--primary-hover);
+    border-color: var(--primary-hover);
+    box-shadow: 0 4px 12px rgba(224, 86, 56, 0.3);
 }
 
-.btn-outline-primario:hover {
-    background-color: var(--cor-primaria);
-    color: var(--cor-fundo);
+.btn-success {
+    background-color: #10b981;
+    border-color: #10b981;
 }
 
+.btn-success:hover {
+    background-color: #059669;
+    border-color: #059669;
+}
+
+/* Cards & Containers Suaves */
 .card {
-    border: none;
-    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border-radius: 12px;
+    border: 1px solid var(--card-border) !important;
+    box-shadow: 0 4px 15px rgba(15, 23, 42, 0.03) !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .card-header {
-    background-color: var(--cor-secundaria);
-    color: var(--cor-texto);
+    border-bottom: 1px solid var(--card-border);
+    font-weight: 700;
+}
+
+/* Card de Produto no Ponto de Venda */
+.card-produto-pdv {
+    cursor: pointer !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.card-produto-pdv:hover {
+    transform: translateY(-4px) !important;
+    box-shadow: 0 8px 25px rgba(224, 86, 56, 0.15) !important;
+    border-color: var(--primary-color) !important;
+}
+
+/* DataTables & Tabelas */
+table.dataTable {
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+}
+
+table.dataTable thead th {
+    background-color: #f1f5f9 !important;
+    color: #475569 !important;
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid #cbd5e1 !important;
+    padding: 10px 14px;
+}
+
+table.dataTable tbody td {
+    padding: 11px 14px;
+    vertical-align: middle;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current {
+    background: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+    color: white !important;
+    border-radius: 6px;
+}
+
+/* Modais com Canto Arredondado */
+.modal-content {
+    border-radius: 16px;
+    border: 0;
+    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.15);
+}
+
+.modal-header {
+    border-bottom: 1px solid var(--card-border);
+}
+
+.modal-footer {
+    border-top: 1px solid var(--card-border);
+}
+
+/* Badges Re-estilizadas */
+.badge {
+    padding: 0.45em 0.75em;
     font-weight: 600;
+    border-radius: 6px;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+}
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
 }
